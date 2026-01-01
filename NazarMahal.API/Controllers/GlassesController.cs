@@ -9,136 +9,221 @@ using NazarMahal.Core.Enums;
 
 namespace NazarMahal.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/glasses")]
     [ApiController]
     [Authorize]
     public class GlassesController(IGlassesService glassesService) : ControllerBase
     {
         private readonly IGlassesService _glassesService = glassesService;
 
-        #region Glasses Categories
+        #region Categories
 
+        /// <summary>
+        /// Get all glasses categories
+        /// </summary>
         [AllowAnonymous]
-        [HttpGet("GetAllCategories")]
-        public async Task<ActionResult<ApiResponseDto<IEnumerable<GlassesCategoryDto>>>> GetAllCategories()
+        [HttpGet("categories")]
+        public async Task<ActionResult<ApiResponseDto<IEnumerable<GlassesCategoryDto>>>> GetCategories()
         {
             var response = await _glassesService.GetAllCategories();
             return response.ToApiResponse();
         }
 
+        /// <summary>
+        /// Create a new glasses category
+        /// </summary>
         [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.SuperAdmin}")]
-        [HttpPost("CreateNewGlassesCategory")]
-        public async Task<ActionResult<ApiResponseDto<GlassesCategoryDto>>> CreateNewGlassesCategory(CreateNewGlassesCategoryRequestDto createNewGlassesCategoryRequestDto)
+        [HttpPost("categories")]
+        public async Task<ActionResult<ApiResponseDto<GlassesCategoryDto>>> CreateCategory([FromBody] CreateNewGlassesCategoryRequestDto request)
         {
-            var response = await _glassesService.CreateNewGlassesCategory(createNewGlassesCategoryRequestDto);
+            var response = await _glassesService.CreateNewGlassesCategory(request);
             return response.ToApiResponse();
         }
 
+        /// <summary>
+        /// Update a glasses category
+        /// </summary>
         [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.SuperAdmin}")]
-        [HttpPut("UpdateGlassesCategory")]
-        public async Task<ActionResult<ApiResponseDto<GlassesCategoryDto>>> UpdateGlassesCategory(UpdateGlassesCategoryRequestDto updateGlassesCategoryRequestDto)
+        [HttpPut("categories/{id}")]
+        public async Task<ActionResult<ApiResponseDto<GlassesCategoryDto>>> UpdateCategory(
+            int id,
+            [FromBody] UpdateGlassesCategoryRequestDto request)
         {
-            var response = await _glassesService.UpdateGlassesCategory(updateGlassesCategoryRequestDto);
+            request.CategoryId = id;
+            var response = await _glassesService.UpdateGlassesCategory(request);
             return response.ToApiResponse();
         }
 
         #endregion
 
-        //TODO: #3, fix this
-        #region Glasses SubCategory 
+        #region Subcategories
+
+        /// <summary>
+        /// Get glasses subcategories
+        /// Query params:
+        /// - categoryId: filter by category (required)
+        /// - activeOnly: filter active subcategories only (default: false)
+        /// </summary>
         [AllowAnonymous]
-        [HttpGet("GetAllGlassesSubCategories/{categoryId}")]
-        public async Task<ActionResult<ApiResponseDto<IEnumerable<GlassesSubcategoriesListDto>>>> GetGlassesSubCategories(int categoryId)
+        [HttpGet("subcategories")]
+        public async Task<ActionResult<ApiResponseDto<IEnumerable<GlassesSubcategoriesListDto>>>> GetSubcategories(
+            [FromQuery] int categoryId,
+            [FromQuery] bool activeOnly = false)
         {
-            var response = await _glassesService.GetAllGlassesSubCategoriesByCategoryId(categoryId);
+            if (categoryId <= 0)
+            {
+                var errorResponse = await _glassesService.GetAllGlassesSubCategoriesByCategoryId(0);
+                if (!errorResponse.IsSuccessful)
+                    return errorResponse.ToApiResponse();
+            }
+
+            var response = activeOnly
+                ? await _glassesService.GetGlassesSubCategories(activeOnly, categoryId)
+                : await _glassesService.GetAllGlassesSubCategoriesByCategoryId(categoryId);
+
             return response.ToApiResponse();
         }
 
+        /// <summary>
+        /// Get a specific subcategory by ID
+        /// </summary>
         [AllowAnonymous]
-        [HttpGet("GetGlassesSubCategories/{showActiveOnly}/{categoryId}")]
-        public async Task<ActionResult<ApiResponseDto<IEnumerable<GlassesSubcategoriesListDto>>>> GetGlassesSubCategories(bool showActiveOnly, int categoryId)
+        [HttpGet("subcategories/{id}")]
+        public async Task<ActionResult<ApiResponseDto<GlassesSubcategoriesListDto>>> GetSubcategory(int id)
         {
-            var response = await _glassesService.GetGlassesSubCategories(showActiveOnly, categoryId);
+            var response = await _glassesService.GetGlassesSubCategoryById(id);
             return response.ToApiResponse();
         }
 
-
-        [AllowAnonymous]
-        [HttpGet("GetGlassesSubCategoryById/{subCategoryId}")]
-        public async Task<ActionResult<ApiResponseDto<GlassesSubcategoriesListDto>>> GetGlassesSubCategoryById(int subCategoryId)
-        {
-            var response = await _glassesService.GetGlassesSubCategoryById(subCategoryId);
-            return response.ToApiResponse();
-        }
-
-
+        /// <summary>
+        /// Create a new glasses subcategory
+        /// </summary>
         [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.SuperAdmin}")]
-        [HttpPost("CreateNewGlassesSubCategory")]
-        public async Task<ActionResult<ApiResponseDto<GlassesSubCategoryDto>>> CreateNewGlassesSubCategory(CreateNewGlassesSubCategoryRequestDto createNewGlassesSubCategoryRequestDto)
+        [HttpPost("subcategories")]
+        public async Task<ActionResult<ApiResponseDto<GlassesSubCategoryDto>>> CreateSubcategory([FromBody] CreateNewGlassesSubCategoryRequestDto request)
         {
-            var response = await _glassesService.CreateNewGlassesSubCategory(createNewGlassesSubCategoryRequestDto);
+            var response = await _glassesService.CreateNewGlassesSubCategory(request);
             return response.ToApiResponse();
         }
 
+        /// <summary>
+        /// Update a glasses subcategory
+        /// </summary>
         [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.SuperAdmin}")]
-        [HttpPut("UpdateGlassesSubCategory")]
-        public async Task<ActionResult<ApiResponseDto<GlassesSubCategoryDto>>> UpdateGlassesSubCategory(UpdateGlassesSubCategoryRequestDto updateGlassesSubCategoryRequestDto)
+        [HttpPut("subcategories/{id}")]
+        public async Task<ActionResult<ApiResponseDto<GlassesSubCategoryDto>>> UpdateSubcategory(
+            int id,
+            [FromBody] UpdateGlassesSubCategoryRequestDto request)
         {
-            var response = await _glassesService.UpdateGlassesSubCategory(updateGlassesSubCategoryRequestDto);
+            request.SubCategoryId = id;
+            var response = await _glassesService.UpdateGlassesSubCategory(request);
             return response.ToApiResponse();
         }
 
+        /// <summary>
+        /// Delete (soft delete) a glasses subcategory
+        /// </summary>
         [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.SuperAdmin}")]
-        [HttpDelete("DeleteGlassesSubCategory/{Id}")]
-        public async Task<ActionResult<ApiResponseDto<GlassesSubCategoryDto>>> DeleteGlassesSubCategory(int Id)
+        [HttpDelete("subcategories/{id}")]
+        public async Task<ActionResult<ApiResponseDto<GlassesSubCategoryDto>>> DeleteSubcategory(int id)
         {
-            var response = await _glassesService.SoftDeleteGlassesSubCategory(Id);
+            var response = await _glassesService.SoftDeleteGlassesSubCategory(id);
             return response.ToApiResponse();
         }
 
         #endregion
-        //TODO: #4,Fix this
-        #region Glasses
+
+        #region Glasses Products
+
+        /// <summary>
+        /// Search/Get glasses with filters
+        /// Query params:
+        /// - glassesName: search by name
+        /// - brand: filter by brand
+        /// - color: filter by color
+        /// - categoryId: filter by category
+        /// - subCategoryId: filter by subcategory
+        /// - isActive: filter active status (default: true)
+        /// - pageNum: page number (default: 1)
+        /// - pageSize: page size (default: 10)
+        /// </summary>
         [AllowAnonymous]
-        [HttpPost("GetAllGlassess")]
-        public async Task<ActionResult<ApiResponseDto<IEnumerable<GlassesListDto>>>> GetGlasses(SearchGlassesRequestDto requestDto)
+        [HttpGet]
+        public async Task<ActionResult<ApiResponseDto<IEnumerable<GlassesListDto>>>> GetGlasses(
+            [FromQuery] string? glassesName = null,
+            [FromQuery] string? brand = null,
+            [FromQuery] string? color = null,
+            [FromQuery] int? categoryId = null,
+            [FromQuery] int? subCategoryId = null,
+            [FromQuery] bool? isActive = true,
+            [FromQuery] int pageNum = 1,
+            [FromQuery] int pageSize = 25)
         {
-            var response = await _glassesService.GetGlasses(requestDto);
+            var searchRequest = new SearchGlassesRequestDto
+            {
+                GlassesName = glassesName,
+                Brand = brand,
+                Color = color,
+                CategoryId = categoryId,
+                SubCategoryId = subCategoryId,
+                IsActive = isActive ?? true,
+                PageNum = pageNum,
+                PageSize = pageSize
+            };
+
+            var response = await _glassesService.GetGlasses(searchRequest);
             return response.ToApiResponse();
         }
 
+        /// <summary>
+        /// Get a specific glasses product by ID
+        /// </summary>
         [AllowAnonymous]
-        [HttpGet("GetGlassesById/{id}")]
-        public async Task<ActionResult<ApiResponseDto<GlassesListDto>>> GetGlassesById(int id)
+        [HttpGet("{id}")]
+        public async Task<ActionResult<ApiResponseDto<GlassesListDto>>> GetGlasses(int id)
         {
             var response = await _glassesService.GetGlassesById(id);
             return response.ToApiResponse();
         }
 
-
+        /// <summary>
+        /// Create a new glasses product (multipart/form-data)
+        /// </summary>
         [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.SuperAdmin}")]
-        [HttpPost("CreateNewGlasses")]
-        public async Task<ActionResult<ApiResponseDto<GlassesDto>>> CreateNewGlasses([FromForm] CreateNewGlassesRequestDto createNewGlassesRequestDto)
+        [HttpPost]
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult<ApiResponseDto<GlassesDto>>> CreateGlasses([FromForm] CreateNewGlassesRequestDto request)
         {
-            var response = await _glassesService.CreateNewGlasses(createNewGlassesRequestDto);
+            var response = await _glassesService.CreateNewGlasses(request);
             return response.ToApiResponse();
         }
 
+        /// <summary>
+        /// Update a glasses product (multipart/form-data)
+        /// </summary>
         [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.SuperAdmin}")]
-        [HttpPut("UpdateGlasses")]
-        public async Task<ActionResult<ApiResponseDto<GlassesDto>>> UpdateGlasses([FromForm] UpdateGlassesRequestDto updateGlassesRequestDto)
+        [HttpPut("{id}")]
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult<ApiResponseDto<GlassesDto>>> UpdateGlasses(
+            int id,
+            [FromForm] UpdateGlassesRequestDto request)
         {
-            var response = await _glassesService.UpdateGlasses(updateGlassesRequestDto);
+            request.GlassesId = id;
+            var response = await _glassesService.UpdateGlasses(request);
             return response.ToApiResponse();
         }
 
+        /// <summary>
+        /// Delete (soft delete) a glasses product
+        /// </summary>
         [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.SuperAdmin}")]
-        [HttpDelete("DeleteGlasses/{Id}")]
-        public async Task<ActionResult<ApiResponseDto<GlassesDto>>> DeleteGlasses(int Id)
+        [HttpDelete("{id}")]
+        public async Task<ActionResult<ApiResponseDto<GlassesDto>>> DeleteGlasses(int id)
         {
-            var response = await _glassesService.SoftDeleteGlasses(Id);
+            var response = await _glassesService.SoftDeleteGlasses(id);
             return response.ToApiResponse();
         }
+
         #endregion
     }
 }

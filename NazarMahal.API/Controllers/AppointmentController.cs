@@ -9,104 +9,153 @@ using NazarMahal.Core.Enums;
 
 namespace NazarMahal.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/appointments")]
     [ApiController]
     [Authorize]
-    public class AppointmentController(IAppointmentService appointmentService) : ControllerBase
+    public class AppointmentsController(IAppointmentService appointmentService) : ControllerBase
     {
         private readonly IAppointmentService _appointmentService = appointmentService;
 
+        /// <summary>
+        /// Get available time slots for a given date
+        /// </summary>
         [AllowAnonymous]
-        [HttpGet("availableApptTime")]
-        public async Task<ActionResult<ApiResponseDto<List<TimeSpan>>>> GetAvailableTimeSlots([FromQuery] DateOnly date)
+        [HttpGet("availability")]
+        public async Task<ActionResult<ApiResponseDto<List<TimeSpan>>>> GetAvailability([FromQuery] DateOnly date)
         {
             var response = await _appointmentService.GetAvailableTimeSlots(date);
             return response.ToApiResponse();
         }
 
+        /// <summary>
+        /// Create a new appointment
+        /// </summary>
         [AllowAnonymous]
-        //TODO: #1 validate if user has an appointment already booked. If not, book an appointment and check if user is a valid user with jwt token
-        [HttpPost("scheduleAppointment")]
-        public async Task<ActionResult<ApiResponseDto<AppointmentDto>>> BookAppointment([FromBody] ScheduleAppointmentRequestDto scheduleAppointmentRequestDto)
+        [HttpPost]
+        public async Task<ActionResult<ApiResponseDto<AppointmentDto>>> CreateAppointment([FromBody] ScheduleAppointmentRequestDto request)
         {
-            var response = await _appointmentService.BookAppointment(scheduleAppointmentRequestDto);
-            return response.ToApiResponse();
-       }
-        
-        [HttpPost("UpdateAppointmentDetails")]
-        public async Task<ActionResult<ApiResponseDto<AppointmentDto>>> UpdateAppointment([FromBody] AppointmentUpdateRequestDto appointmentUpdateRequestDto)
-        {
-            var response = await _appointmentService.UpdateAppointment(appointmentUpdateRequestDto);
+            var response = await _appointmentService.BookAppointment(request);
             return response.ToApiResponse();
         }
 
-        [HttpPost("UpdateAppointmentStatus")]
-        public async Task<ActionResult<ApiResponseDto<AppointmentDto>>> UpdateAppointmentStatus([FromBody] AppointmentCancelRequestDto appointmentCancelRequestDto)
+        /// <summary>
+        /// Get appointment by ID
+        /// </summary>
+        [HttpGet("{id}")]
+        public async Task<ActionResult<ApiResponseDto<AppointmentDto>>> GetAppointment(int id)
         {
-            var response = await _appointmentService.UpdateAppointmentStatus(appointmentCancelRequestDto);
+            var response = await _appointmentService.GetAppointmentById(id);
             return response.ToApiResponse();
         }
 
-        [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.SuperAdmin}")]
-        [HttpGet("GetAllAppointments")]
-        public async Task<ActionResult<ApiResponseDto<IEnumerable<AppointmentDto>>>> GetAllAppointments()
+        /// <summary>
+        /// Update appointment (details or status)
+        /// Merged endpoint: replaces UpdateAppointmentDetails + UpdateAppointmentStatus
+        /// </summary>
+        [HttpPatch("{id}")]
+        public async Task<ActionResult<ApiResponseDto<AppointmentDto>>> UpdateAppointment(
+            int id,
+            [FromBody] UpdateAppointmentMergedRequestDto request)
         {
-            var response = await _appointmentService.GetAllAppointments();
-            return response.ToApiResponse();
-        }                                                                              
+            // If only status is provided, use status update
+            if (request.AppointmentStatus.HasValue &&
+                !request.AppointmentDate.HasValue &&
+                !request.AppointmentTime.HasValue &&
+                string.IsNullOrEmpty(request.ReasonForVisit) &&
+                string.IsNullOrEmpty(request.PhoneNumber) &&
+                request.AppointmentType == null)
+            {
+                var statusRequest = new AppointmentCancelRequestDto
+                {
+                    AppointmentId = id,
+                    AppointmentStatus = request.AppointmentStatus.Value
+                };
+                var response = await _appointmentService.UpdateAppointmentStatus(statusRequest);
+                return response.ToApiResponse();
+            }
 
-        [HttpPost("GetAllAppointmentsByUserId")]
-        public async Task<ActionResult<ApiResponseDto<IEnumerable<AppointmentDto>>>> GetAllAppointmentsByUserId(int userId)
-        {
-            var response = await _appointmentService.GetAppointmentByUserId(userId);
-            return response.ToApiResponse();
+            // Otherwise, use full update
+            var updateRequest = new AppointmentUpdateRequestDto
+            {
+                AppointmentId = id,
+                UserId = request.UserId ?? 0,
+                AppointmentDate = request.AppointmentDate ?? DateOnly.FromDateTime(DateTime.Today),
+                AppointmentTime = request.AppointmentTime ?? TimeSpan.Zero,
+                ReasonForVisit = request.ReasonForVisit ?? string.Empty,
+                PhoneNumber = request.PhoneNumber,
+                AppointmentType = request.AppointmentType ?? AppointmentEnums.AppointmentType.Consultation,
+                AdditionalNotes = request.AdditionalNotes
+            };
+            var updateResponse = await _appointmentService.UpdateAppointment(updateRequest);
+            return updateResponse.ToApiResponse();
         }
 
-        [HttpGet("GetAppointmentById/{appointmentId}")]
-        public async Task<ActionResult<ApiResponseDto<AppointmentDto>>> GetAppointmentById(int appointmentId)
+        /// <summary>
+        /// Get appointments with filters
+        /// Query params:
+        /// - userId: filter by user
+        /// - startDate: filter by date range start
+        /// - endDate: filter by date range end
+        /// - status: filter by appointment status
+        /// - today: get only today's appointments
+        /// - days: get upcoming appointments for N days
+        /// - query: search by full name
+        /// </summary>
+        [HttpGet]
+        public async Task<ActionResult<ApiResponseDto<IEnumerable<AppointmentDto>>>> GetAppointments(
+            [FromQuery] int? userId = null,
+            [FromQuery] DateOnly? startDate = null,
+            [FromQuery] DateOnly? endDate = null,
+            [FromQuery] AppointmentEnums.AppointmentStatus? status = null,
+            [FromQuery] bool today = false,
+            [FromQuery] int? days = null,
+            [FromQuery] string? query = null)
         {
-            var response = await _appointmentService.GetAppointmentById(appointmentId);
-            return response.ToApiResponse();
-        }
+            // Search by full name
+            if (!string.IsNullOrEmpty(query))
+            {
+                var response = await _appointmentService.SearchAppointmentsByFullName(query, startDate);
+                return response.ToApiResponse();
+            }
 
-        [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.SuperAdmin}")]
-        [HttpGet("GetAppointmentsByDateRange")]
-        public async Task<ActionResult<ApiResponseDto<IEnumerable<AppointmentDto>>>> GetAppointmentsByDateRange([FromQuery] DateOnly startDate, [FromQuery] DateOnly endDate)
-        {
-            var response = await _appointmentService.GetAppointmentsByDateRange(startDate, endDate);
-            return response.ToApiResponse();
-        }
+            // Get today's appointments
+            if (today)
+            {
+                var response = await _appointmentService.GetTodaysAppointments();
+                return response.ToApiResponse();
+            }
 
-        [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.SuperAdmin}")]
-        [HttpGet("GetAppointmentsByStatus")]
-        public async Task<ActionResult<ApiResponseDto<IEnumerable<AppointmentDto>>>> GetAppointmentsByStatus([FromQuery] AppointmentEnums.AppointmentStatus status)
-        {
-            var response = await _appointmentService.GetAppointmentsByStatus(status);
-            return response.ToApiResponse();
-        }
+            // Get upcoming appointments
+            if (days.HasValue)
+            {
+                var response = await _appointmentService.GetUpcomingAppointments(days.Value);
+                return response.ToApiResponse();
+            }
 
-        [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.SuperAdmin}")]
-        [HttpGet("GetTodaysAppointments")]
-        public async Task<ActionResult<ApiResponseDto<IEnumerable<AppointmentDto>>>> GetTodaysAppointments()
-        {
-            var response = await _appointmentService.GetTodaysAppointments();
-            return response.ToApiResponse();
-        }
+            // Get appointments by date range
+            if (startDate.HasValue && endDate.HasValue)
+            {
+                var response = await _appointmentService.GetAppointmentsByDateRange(startDate.Value, endDate.Value);
+                return response.ToApiResponse();
+            }
 
-        [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.SuperAdmin}")]
-        [HttpGet("GetNextSevenDaysAppointments")]
-        public async Task<ActionResult<ApiResponseDto<IEnumerable<AppointmentDto>>>> GetUpcomingAppointments([FromQuery] int days = 7)
-        {
-            var response = await _appointmentService.GetUpcomingAppointments(days);
-            return response.ToApiResponse();
-        }
-        
-        [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.SuperAdmin}")]
-        [HttpGet("SearchAppointments")]
-        public async Task<ActionResult<ApiResponseDto<IEnumerable<AppointmentDto>>>> SearchAppointments([FromQuery] string query, [FromQuery] DateOnly? date = null)
-        {
-            var response = await _appointmentService.SearchAppointmentsByFullName(query, date);
-            return response.ToApiResponse();
+            // Get appointments by status
+            if (status.HasValue)
+            {
+                var response = await _appointmentService.GetAppointmentsByStatus(status.Value);
+                return response.ToApiResponse();
+            }
+
+            // Get appointments by user ID
+            if (userId.HasValue)
+            {
+                var response = await _appointmentService.GetAppointmentByUserId(userId.Value);
+                return response.ToApiResponse();
+            }
+
+            // Get all appointments
+            var allResponse = await _appointmentService.GetAllAppointments();
+            return allResponse.ToApiResponse();
         }
     }
 }
