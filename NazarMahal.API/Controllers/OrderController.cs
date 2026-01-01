@@ -13,14 +13,9 @@ namespace NazarMahal.API.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class OrderController : ControllerBase
+    public class OrderController(IOrderService orderService) : ControllerBase
     {
-        private readonly IOrderService _orderService;
-
-        public OrderController(IOrderService orderService)
-        {
-            _orderService = orderService;
-        }
+        private readonly IOrderService _orderService = orderService;
 
         [HttpPost("Create")]
         public async Task<ActionResult<ApiResponseDto<OrderDto>>> CreateOrder(CreateOrderRequestDto orderRequest)

@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using NazarMahal.API.Extensions;
 using NazarMahal.Application.Interfaces;
 using NazarMahal.Application.RequestDto.UserRequestDto;
-using NazarMahal.Application.RequestDto.UserRequestDto;
 using NazarMahal.Application.ResponseDto.UserResponseDto;
 using NazarMahal.Core.Enums;
 
@@ -13,14 +12,9 @@ namespace NazarMahal.API.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class UserController : ControllerBase
+    public class UserController(IUserService userService) : ControllerBase
     {
-        private readonly IUserService _userService;
-
-        public UserController(IUserService userService)
-        {
-            _userService = userService;
-        }
+        private readonly IUserService _userService = userService;
 
         [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.SuperAdmin}")]
         [HttpGet("{userId}")]

@@ -7,16 +7,10 @@ using NazarMahal.Core.ActionResponses;
 
 namespace NazarMahal.Application.Services
 {
-    public class UserService : IUserService
+    public class UserService(IUserRepository userRepository, IMapper mapper) : IUserService
     {
-        private readonly IUserRepository _userRepository;
-        private readonly IMapper _mapper;
-
-        public UserService(IUserRepository userRepository, IMapper mapper)
-        {
-            _userRepository = userRepository;
-            _mapper = mapper;
-        }
+        private readonly IUserRepository _userRepository = userRepository;
+        private readonly IMapper _mapper = mapper;
 
         public async Task<ActionResponse<UserResponseDto>> GetUserByIdAsync(int userId)
         {

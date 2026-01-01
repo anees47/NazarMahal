@@ -12,13 +12,9 @@ namespace NazarMahal.API.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class GlassesController : ControllerBase
+    public class GlassesController(IGlassesService glassesService) : ControllerBase
     {
-        private readonly IGlassesService _glassesService;
-        public GlassesController(IGlassesService glassesService)
-        {
-            _glassesService = glassesService;
-        }
+        private readonly IGlassesService _glassesService = glassesService;
 
         #region Glasses Categories
 

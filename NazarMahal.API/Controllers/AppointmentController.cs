@@ -12,14 +12,9 @@ namespace NazarMahal.API.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class AppointmentController : ControllerBase
+    public class AppointmentController(IAppointmentService appointmentService) : ControllerBase
     {
-        private readonly IAppointmentService _appointmentService;
-
-        public AppointmentController(IAppointmentService appointmentService)
-        {
-            _appointmentService = appointmentService;
-        }
+        private readonly IAppointmentService _appointmentService = appointmentService;
 
         [AllowAnonymous]
         [HttpGet("availableApptTime")]

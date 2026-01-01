@@ -9,18 +9,11 @@ using NazarMahal.Application.ResponseDto.UserResponseDto;
 
 namespace NazarMahal.Infrastructure.Repository
 {
-    public class UserRepository : IUserRepository
+    public class UserRepository(UserManager<ApplicationUser> userManager, IMapper mapper, RoleManager<ApplicationRole> roleManager) : IUserRepository
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IMapper _mapper;
-        private readonly RoleManager<ApplicationRole> _roleManager;
-
-        public UserRepository(UserManager<ApplicationUser> userManager, IMapper mapper, RoleManager<ApplicationRole> roleManager)
-        {
-            _userManager = userManager;
-            _mapper = mapper;
-            _roleManager = roleManager;
-        }
+        private readonly UserManager<ApplicationUser> _userManager = userManager;
+        private readonly IMapper _mapper = mapper;
+        private readonly RoleManager<ApplicationRole> _roleManager = roleManager;
 
         public async Task<bool> ChangePasswordAsync(int userId, ChangeUserPasswordRequestDto changeUserPasswordRequestDto)
         {

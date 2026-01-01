@@ -16,28 +16,18 @@ using System.Text;
 
 namespace NazarMahal.Infrastructure.Services
 {
-    public class AuthService : IAuthService
+    public class AuthService(
+        UserManager<ApplicationUser> userManager,
+        RoleManager<ApplicationRole> roleManager,
+        IConfiguration configuration,
+        IEmailService emailService,
+        INotificationService notificationService) : IAuthService
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly RoleManager<ApplicationRole> _roleManager;
-        private readonly IConfiguration _configuration;
-        private readonly IEmailService _emailService;
-        private readonly INotificationService _notificationService;
-
-
-        public AuthService(
-            UserManager<ApplicationUser> userManager,
-            RoleManager<ApplicationRole> roleManager,
-            IConfiguration configuration,
-            IEmailService emailService,
-            INotificationService notificationService)
-        {
-            _userManager = userManager;
-            _roleManager = roleManager;
-            _configuration = configuration;
-            _emailService = emailService;
-            _notificationService = notificationService;
-        }
+        private readonly UserManager<ApplicationUser> _userManager = userManager;
+        private readonly RoleManager<ApplicationRole> _roleManager = roleManager;
+        private readonly IConfiguration _configuration = configuration;
+        private readonly IEmailService _emailService = emailService;
+        private readonly INotificationService _notificationService = notificationService;
 
         public async Task<ActionResponse<RegisterResponseDto>> Register(RegisterModel model, IRequestContextAccessor requestContext)
         {

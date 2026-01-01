@@ -11,17 +11,11 @@ using static NazarMahal.Core.ActionResponses.NothingActionResponse;
 
 namespace NazarMahal.Application.Services
 {
-    public class GlassesService : IGlassesService
+    public class GlassesService(IGlassesRepository glassesRepository, IMapper mapper, IGlassesReadModelRepository glassesReadModelRepository) : IGlassesService
     {
-        private readonly IGlassesRepository _glassesRepository;
-        private readonly IGlassesReadModelRepository _glassesReadModelRepository;
-        private readonly IMapper _mapper;
-        public GlassesService(IGlassesRepository glassesRepository, IMapper mapper, IGlassesReadModelRepository glassesReadModelRepository)
-        {
-            _glassesRepository = glassesRepository;
-            _mapper = mapper;
-            _glassesReadModelRepository = glassesReadModelRepository;
-        }
+        private readonly IGlassesRepository _glassesRepository = glassesRepository;
+        private readonly IGlassesReadModelRepository _glassesReadModelRepository = glassesReadModelRepository;
+        private readonly IMapper _mapper = mapper;
 
         #region Glasses Category
 

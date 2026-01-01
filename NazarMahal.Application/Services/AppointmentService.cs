@@ -11,34 +11,20 @@ using NazarMahal.Core.Enums;
 
 namespace NazarMahal.Application.Services
 {
-    public class AppointmentService : IAppointmentService
+    public class AppointmentService(
+        IEmailService emailService,
+        IUserRepository userRepository,
+        IAppointmentRepository appointmentRepository,
+        IMapper mapper,
+        INotificationService notificationService,
+        IConfiguration configuration) : IAppointmentService
     {
-        private readonly IUserRepository _userRepository;
-        private readonly IAppointmentRepository _appointmentRepository;
-        private readonly IMapper _mapper;
-        private readonly INotificationService _notificationService;
-        private readonly IEmailService _emailService;
-        private readonly IConfiguration _configuration;
-
-
-
-        public AppointmentService
-            (
-                IEmailService emailService,
-                IUserRepository userRepository,
-                IAppointmentRepository appointmentRepository,
-                IMapper mapper,
-                INotificationService notificationService,
-                IConfiguration configuration
-            )
-        {
-            _emailService = emailService;
-            _userRepository = userRepository;
-            _appointmentRepository = appointmentRepository;
-            _mapper = mapper;
-            _notificationService = notificationService;
-            _configuration = configuration;
-        }
+        private readonly IUserRepository _userRepository = userRepository;
+        private readonly IAppointmentRepository _appointmentRepository = appointmentRepository;
+        private readonly IMapper _mapper = mapper;
+        private readonly INotificationService _notificationService = notificationService;
+        private readonly IEmailService _emailService = emailService;
+        private readonly IConfiguration _configuration = configuration;
 
         public async Task<ActionResponse<List<TimeSpan>>> GetAvailableTimeSlots(DateOnly date)
         {

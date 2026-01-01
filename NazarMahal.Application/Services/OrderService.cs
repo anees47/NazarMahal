@@ -12,33 +12,22 @@ using NazarMahal.Core.Enums;
 
 namespace NazarMahal.Application.Services
 {
-    public class OrderService : IOrderService
+    public class OrderService(
+        IOrderRepository orderRepository,
+        IMapper mapper,
+        ILogger<OrderService> logger,
+        IUserRepository userRepository,
+        IGlassesService glassesService,
+        IGlassesRepository glassesRepository,
+        INotificationService notificationService) : IOrderService
     {
-        private readonly IOrderRepository _orderRepository;
-        private readonly IUserRepository _userRepository;
-        private readonly IMapper _mapper;
-        private readonly ILogger<OrderService> _logger;
-        private readonly IGlassesService _glassesService;
-        private readonly IGlassesRepository _glassesRepository;
-        private readonly INotificationService _notificationService;
-
-        public OrderService(
-            IOrderRepository orderRepository,
-            IMapper mapper,
-            ILogger<OrderService> logger,
-            IUserRepository userRepository,
-            IGlassesService glassesService,
-            IGlassesRepository glassesRepository,
-            INotificationService notificationService)
-        {
-            _orderRepository = orderRepository;
-            _mapper = mapper;
-            _logger = logger;
-            _userRepository = userRepository;
-            _glassesService = glassesService;
-            _glassesRepository = glassesRepository;
-            _notificationService = notificationService;
-        }
+        private readonly IOrderRepository _orderRepository = orderRepository;
+        private readonly IUserRepository _userRepository = userRepository;
+        private readonly IMapper _mapper = mapper;
+        private readonly ILogger<OrderService> _logger = logger;
+        private readonly IGlassesService _glassesService = glassesService;
+        private readonly IGlassesRepository _glassesRepository = glassesRepository;
+        private readonly INotificationService _notificationService = notificationService;
 
         public async Task<ActionResponse<OrderDto>> CreateOrder(CreateOrderRequestDto orderRequest)
         {

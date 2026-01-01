@@ -7,16 +7,10 @@ using System.Text;
 
 namespace NazarMahal.Infrastructure.Services
 {
-    public class NotificationService : INotificationService
+    public class NotificationService(IUserRepository userRepository, IEmailService emailService) : INotificationService
     {
-        private readonly IUserRepository _userRepository;
-        private readonly IEmailService _emailService;
-
-        public NotificationService(IUserRepository userRepository, IEmailService emailService)
-        {
-            _userRepository = userRepository;
-            _emailService = emailService;
-        }
+        private readonly IUserRepository _userRepository = userRepository;
+        private readonly IEmailService _emailService = emailService;
 
         #region Appointment Emails
 
