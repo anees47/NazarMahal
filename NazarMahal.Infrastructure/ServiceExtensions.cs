@@ -1,0 +1,125 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
+using NazarMahal.Application.Interfaces;
+using NazarMahal.Application.Interfaces.IReadModelRepository;
+using NazarMahal.Application.Interfaces.IRepository;
+using NazarMahal.Core.Entities;
+using NazarMahal.Infrastructure.AutoMapper;
+using NazarMahal.Infrastructure.Data;
+using NazarMahal.Infrastructure.ReadModelRepository;
+using NazarMahal.Infrastructure.Repository;
+using NazarMahal.Infrastructure.Services;
+using System.Data;
+using System.Text;
+
+namespace NazarMahal.Infrastructure;
+
+public static class ServiceExtensions
+{
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    {
+
+        /* ================================
+         * Http Context
+         * ================================ */
+        services.AddHttpContextAccessor();
+
+        /* ================================
+         * Database
+         * ================================ */
+        services.AddDbContext<ApplicationDbContext>(options =>
+            options.UseSqlServer(
+                configuration.GetConnectionString("DefaultConnection"),
+                sql => sql.EnableRetryOnFailure()
+            )
+        );
+
+        /* ================================
+         * Identity
+         * ================================ */
+        services
+            .AddIdentity<ApplicationUser, ApplicationRole>(options =>
+            {
+                options.Tokens.PasswordResetTokenProvider = TokenOptions.DefaultProvider;
+                options.Password.RequiredLength = 8;
+                options.User.RequireUniqueEmail = true;
+            })
+            .AddEntityFrameworkStores<ApplicationDbContext>()
+            .AddDefaultTokenProviders();
+
+        services.Configure<DataProtectionTokenProviderOptions>(options =>
+        {
+            options.TokenLifespan = TimeSpan.FromMinutes(10);
+        });
+
+        /* ================================
+         * Repositories
+         * ================================ */
+        services.AddScoped<IGlassesRepository, GlassesRepository>();
+        services.AddScoped<IGlassesReadModelRepository, GlassesReadModelRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IOrderRepository, OrderRepository>();
+        services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+
+        /* ================================
+         * Domain / Infrastructure Services
+         * ================================ */
+        services.AddScoped<IEmailService, EmailService>();
+        services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<IAuthService, AuthService>();
+
+        services.AddScoped<Core.Abstractions.IRequestContextAccessor, RequestContextAccessor>();
+        services.AddScoped<Core.Abstractions.IFileStorage>(_ =>
+            new FileStorage("wwwroot"));
+
+        /* ================================
+         * Dapper
+         * ================================ */
+        services.AddScoped<IDbConnection>(_ =>
+        {
+            var connectionString = configuration.GetConnectionString("DefaultConnection")
+                ?? throw new InvalidOperationException("DefaultConnection is missing.");
+
+            return new SqlConnection(connectionString);
+        });
+
+        /* ================================
+         * Authentication - JWT
+         * ================================ */
+        services
+            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+
+                    ValidIssuer = configuration["Jwt:Issuer"],
+                    ValidAudience = configuration["Jwt:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!)
+                    )
+                };
+            });
+
+        /* ================================
+         * Authorization
+         * ================================ */
+        services.AddAuthorization(options =>
+        {
+            options.AddPolicy("RequireAdminUserType", policy =>
+                policy.RequireClaim("UserType", "Admin"));
+        });
+
+        return services;
+    }
+}
