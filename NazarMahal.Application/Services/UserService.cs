@@ -1,16 +1,15 @@
-using AutoMapper;
 using NazarMahal.Application.Interfaces;
 using NazarMahal.Application.Interfaces.IRepository;
+using NazarMahal.Application.Mappers;
 using NazarMahal.Application.RequestDto.UserRequestDto;
 using NazarMahal.Application.ResponseDto.UserResponseDto;
 using NazarMahal.Core.ActionResponses;
 
 namespace NazarMahal.Application.Services
 {
-    public class UserService(IUserRepository userRepository, IMapper mapper) : IUserService
+    public class UserService(IUserRepository userRepository) : IUserService
     {
         private readonly IUserRepository _userRepository = userRepository;
-        private readonly IMapper _mapper = mapper;
 
         public async Task<ActionResponse<UserResponseDto>> GetUserByIdAsync(int userId)
         {
@@ -22,8 +21,7 @@ namespace NazarMahal.Application.Services
                 var user = await _userRepository.GetUserByIdAsync(userId);
                 if (user == null) return new NotFoundActionResponse<UserResponseDto>("User not found");
 
-                var userResult = _mapper.Map<UserResponseDto>(user);
-                return new OkActionResponse<UserResponseDto>(userResult);
+                return new OkActionResponse<UserResponseDto>(user);
             }
             catch (Exception ex)
             {
@@ -39,7 +37,18 @@ namespace NazarMahal.Application.Services
                 if (users == null || !users.Any())
                     return new NotFoundActionResponse<IEnumerable<UserListResponseDto>>("No users found");
 
-                var userList = _mapper.Map<IEnumerable<UserListResponseDto>>(users);
+                var userList = users.Select(u => new UserListResponseDto
+                {
+                    UserId = u.Id.ToString(),
+                    FullName = u.FullName,
+                    Email = u.Email,
+                    PhoneNumber = u.PhoneNumber,
+                    Address = u.Address,
+                    IsEmailConfirmed = true,
+                    IsDisabled = u.IsDisabled,
+                    DateCreated = u.DateCreated
+                }).ToList();
+
                 return new OkActionResponse<IEnumerable<UserListResponseDto>>(userList);
             }
             catch (Exception ex)
@@ -63,6 +72,7 @@ namespace NazarMahal.Application.Services
 
                 if (changePasswordRequest.NewPassword != changePasswordRequest.ConfirmPassword)
                     return new FailActionResponse<bool>(false, "New Password and confirm password do not match");
+                
                 var isPasswordChanged = await _userRepository.ChangePasswordAsync(userId, changePasswordRequest);
                 if (!isPasswordChanged)
                     return new FailActionResponse<bool>("Failed to change the password");
@@ -85,7 +95,6 @@ namespace NazarMahal.Application.Services
                 var user = await _userRepository.GetUserByIdAsync(userId);
                 if (user == null) return new NotFoundActionResponse<bool>("User not found");
 
-
                 var isUpdated = await _userRepository.DisableUserAsync(userId);
                 if (!isUpdated)
                     return new FailActionResponse<bool>("Failed to disable user");
@@ -98,8 +107,6 @@ namespace NazarMahal.Application.Services
             }
         }
 
-
-
         public async Task<ActionResponse<UserResponseDto>> CreateNewUser(CreateNewUserRequestDto createNewUserRequestDto)
         {
             try
@@ -107,30 +114,28 @@ namespace NazarMahal.Application.Services
                 if (createNewUserRequestDto == null)
                     return new FailActionResponse<UserResponseDto>("Request body cannot be null.");
 
-                var existingUser = _userRepository.GetAllUsersAsync()
-                                    .Result.FirstOrDefault(u => u.Email == createNewUserRequestDto.Email);
+                var existingUser = (await _userRepository.GetAllUsersAsync())
+                                    .FirstOrDefault(u => u.Email == createNewUserRequestDto.Email);
                 if (existingUser != null)
                 {
                     return new FailActionResponse<UserResponseDto>("User with this email already exists");
                 }
 
-                var newUser = _mapper.Map<CreateNewUserRequestDto>(createNewUserRequestDto);
-
-                var createdUser = await _userRepository.AddUserAsync(newUser);
+                var createdUser = await _userRepository.AddUserAsync(createNewUserRequestDto);
 
                 if (createdUser == null)
                 {
                     return new FailActionResponse<UserResponseDto>("Failed to create new user");
                 }
 
-                var userResult = _mapper.Map<UserResponseDto>(createdUser);
-                return new OkActionResponse<UserResponseDto>(userResult, "User created successfully");
+                return new OkActionResponse<UserResponseDto>(createdUser, "User created successfully");
             }
             catch (Exception)
             {
                 return new FailActionResponse<UserResponseDto>($"Error occurred in UserService.CreateNewUser");
             }
         }
+
         public async Task<ActionResponse<UserResponseDto>> UpdateUserInfoByIdAsync(UpdateUserRequestDto updateUserRequest)
         {
             if (updateUserRequest == null)
@@ -141,14 +146,22 @@ namespace NazarMahal.Application.Services
 
             try
             {
-                var result = await _userRepository.UpdateUserInfoAsync(updateUserRequest.UserId, updateUserRequest.Fullname, updateUserRequest.Email, updateUserRequest.Address, updateUserRequest.IsDisabled, updateUserRequest.ProfilePicture);
-                if (result == null) return new FailActionResponse<UserResponseDto>("An Error Occured");
-                var updateResult = _mapper.Map<UserResponseDto>(result);
-                return new OkActionResponse<UserResponseDto>(updateResult);
+                var result = await _userRepository.UpdateUserInfoAsync(
+                    updateUserRequest.UserId, 
+                    updateUserRequest.Fullname, 
+                    updateUserRequest.Email, 
+                    updateUserRequest.Address, 
+                    updateUserRequest.IsDisabled, 
+                    updateUserRequest.ProfilePicture);
+                
+                if (result == null) 
+                    return new FailActionResponse<UserResponseDto>("An Error Occurred");
+
+                return new OkActionResponse<UserResponseDto>(result);
             }
             catch (Exception)
             {
-                return new FailActionResponse<UserResponseDto>("An Error occured in UserService.UpdateUserInfoByIdAsync");
+                return new FailActionResponse<UserResponseDto>("An Error occurred in UserService.UpdateUserInfoByIdAsync");
             }
         }
     }

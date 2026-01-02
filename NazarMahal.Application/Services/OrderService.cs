@@ -1,8 +1,8 @@
-using AutoMapper;
 using Microsoft.Extensions.Logging;
 using NazarMahal.Application.DTOs.OrderDto;
 using NazarMahal.Application.Interfaces;
 using NazarMahal.Application.Interfaces.IRepository;
+using NazarMahal.Application.Mappers;
 using NazarMahal.Application.RequestDto.OrderRequestDto;
 using NazarMahal.Application.ResponseDto.OrderResponseDto;
 using NazarMahal.Core.ActionResponses;
@@ -14,7 +14,6 @@ namespace NazarMahal.Application.Services
 {
     public class OrderService(
         IOrderRepository orderRepository,
-        IMapper mapper,
         ILogger<OrderService> logger,
         IUserRepository userRepository,
         IGlassesService glassesService,
@@ -23,7 +22,6 @@ namespace NazarMahal.Application.Services
     {
         private readonly IOrderRepository _orderRepository = orderRepository;
         private readonly IUserRepository _userRepository = userRepository;
-        private readonly IMapper _mapper = mapper;
         private readonly ILogger<OrderService> _logger = logger;
         private readonly IGlassesService _glassesService = glassesService;
         private readonly IGlassesRepository _glassesRepository = glassesRepository;
@@ -31,8 +29,6 @@ namespace NazarMahal.Application.Services
 
         public async Task<ActionResponse<OrderDto>> CreateOrder(CreateOrderRequestDto orderRequest)
         {
-            // Note: Transactions should be handled through UnitOfWork pattern
-            // For now, operations are done through repositories
             try
             {
                 if (!ValidateOrderRequest(orderRequest, out var validationError))
@@ -46,7 +42,6 @@ namespace NazarMahal.Application.Services
                     return new FailActionResponse<OrderDto>("User not found");
                 }
 
-                // Validate and process all order items
                 var orderItems = new List<OrderItem>();
                 decimal totalAmount = 0;
 
@@ -64,17 +59,14 @@ namespace NazarMahal.Application.Services
                         return new FailActionResponse<OrderDto>($"Insufficient inventory for {glasses.Name}. Only {glasses.AvailableQuantity} available.");
                     }
 
-                    // Update inventory
                     glasses.AvailableQuantity -= item.Quantity;
                     await _glassesRepository.UpdateGlasses(glasses);
 
-                    // Create order item
-                    var orderItem = new OrderItem(item.GlassesId, item.Quantity, item.UnitPrice);
+                    var orderItem = item.ToOrderItem();
                     orderItems.Add(orderItem);
                     totalAmount += orderItem.TotalAmount;
                 }
 
-                // Create order
                 var order = new Order(
                     orderRequest.UserId,
                     totalAmount,
@@ -86,22 +78,18 @@ namespace NazarMahal.Application.Services
                     orderRequest.PaymentMethod
                 );
 
-                // Create order through repository
                 var createdOrder = await _orderRepository.AddOrder(order);
 
-                // Add order items with correct OrderId
                 foreach (var item in orderItems)
                 {
                     item.OrderId = createdOrder.OrderId;
                 }
 
-                // Add order items to the created order
                 createdOrder.OrderItems = orderItems.ToList();
                 await _orderRepository.CompleteAsync();
 
-                var orderDto = _mapper.Map<OrderDto>(createdOrder);
+                var orderDto = createdOrder.ToOrderDto();
 
-                // Send notifications after successful transaction
                 try
                 {
                     if (!string.IsNullOrWhiteSpace(orderRequest.UserEmail))
@@ -119,7 +107,6 @@ namespace NazarMahal.Application.Services
             }
             catch (Exception ex)
             {
-                // Transaction rollback handled by repository
                 _logger.LogError(ex, "Error creating order");
                 return new FailActionResponse<OrderDto>("An error occurred while creating the order.");
             }
@@ -200,7 +187,7 @@ namespace NazarMahal.Application.Services
             try
             {
                 var orders = await _orderRepository.RetrieveAllOrders();
-                var orderDtos = _mapper.Map<IEnumerable<OrderResponseDto>>(orders);
+                var orderDtos = orders.ToOrderResponseDtoList();
                 return new OkActionResponse<IEnumerable<OrderResponseDto>>(orderDtos);
             }
             catch (Exception)
@@ -214,7 +201,7 @@ namespace NazarMahal.Application.Services
             try
             {
                 var orders = await _orderRepository.RetrieveOpenOrders();
-                var orderDtos = _mapper.Map<IEnumerable<OrderResponseDto>>(orders);
+                var orderDtos = orders.ToOrderResponseDtoList();
                 return new OkActionResponse<IEnumerable<OrderResponseDto>>(orderDtos);
             }
             catch (Exception)
@@ -228,7 +215,7 @@ namespace NazarMahal.Application.Services
             try
             {
                 var orders = await _orderRepository.RetrieveAllCompletedOrders();
-                var orderDtos = _mapper.Map<IEnumerable<OrderResponseDto>>(orders);
+                var orderDtos = orders.ToOrderResponseDtoList();
                 return new OkActionResponse<IEnumerable<OrderResponseDto>>(orderDtos);
             }
             catch (Exception)
@@ -242,7 +229,7 @@ namespace NazarMahal.Application.Services
             try
             {
                 var orders = await _orderRepository.RetrieveAllCancelledOrders();
-                var orderDtos = _mapper.Map<IEnumerable<OrderResponseDto>>(orders);
+                var orderDtos = orders.ToOrderResponseDtoList();
                 return new OkActionResponse<IEnumerable<OrderResponseDto>>(orderDtos);
             }
             catch (Exception)
@@ -262,8 +249,7 @@ namespace NazarMahal.Application.Services
                     return new FailActionResponse<OrderResponseDto>("Order not found");
                 }
 
-                var orderDto = _mapper.Map<OrderResponseDto>(order);
-
+                var orderDto = order.ToOrderResponseDto();
                 return new OkActionResponse<OrderResponseDto>(orderDto);
             }
             catch (Exception)
@@ -271,6 +257,7 @@ namespace NazarMahal.Application.Services
                 return new FailActionResponse<OrderResponseDto>("An error occurred while retrieving the order.");
             }
         }
+
         public async Task<ActionResponse<OrderResponseDto>> CancelOrder(int orderId, bool orderStatus)
         {
             try
@@ -284,7 +271,7 @@ namespace NazarMahal.Application.Services
                 order.OrderStatus = orderStatus ? OrderStatus.Cancelled : OrderStatus.New;
                 await _orderRepository.CompleteAsync();
 
-                var orderDto = _mapper.Map<OrderResponseDto>(order);
+                var orderDto = order.ToOrderResponseDto();
                 return new OkActionResponse<OrderResponseDto>(orderDto,
                     orderStatus ? "Order canceled successfully." : "Order uncancelled successfully.");
             }
@@ -303,14 +290,14 @@ namespace NazarMahal.Application.Services
                 {
                     return new FailActionResponse<OrderResponseDto>("Order not found.");
                 }
-                if (order.OrderStatus == newStatus) return new FailActionResponse<OrderResponseDto>("New status is same as current status.");
+                if (order.OrderStatus == newStatus) 
+                    return new FailActionResponse<OrderResponseDto>("New status is same as current status.");
 
                 order.OrderStatus = newStatus;
                 await _orderRepository.CompleteAsync();
 
-                var orderDto = _mapper.Map<OrderResponseDto>(order);
+                var orderDto = order.ToOrderResponseDto();
 
-                // send email when order becomes ready for pickup
                 try
                 {
                     if (newStatus == OrderStatus.ReadyForPickup)
@@ -330,6 +317,7 @@ namespace NazarMahal.Application.Services
                 return new FailActionResponse<OrderResponseDto>("An error occurred while updating the order status.");
             }
         }
+
         public async Task<ActionResponse<IEnumerable<OrderResponseDto>>> GetOrderByUserId(int userId)
         {
             try
@@ -338,8 +326,7 @@ namespace NazarMahal.Application.Services
                 if (userOrders == null || !userOrders.Any())
                     return new FailActionResponse<IEnumerable<OrderResponseDto>>("No orders found for the user.");
 
-                var userOrderDtos = _mapper.Map<IEnumerable<OrderResponseDto>>(userOrders);
-
+                var userOrderDtos = userOrders.ToOrderResponseDtoList();
                 return new OkActionResponse<IEnumerable<OrderResponseDto>>(userOrderDtos);
             }
             catch (Exception)
@@ -347,7 +334,5 @@ namespace NazarMahal.Application.Services
                 return new FailActionResponse<IEnumerable<OrderResponseDto>>("An error occurred while retrieving the user's orders.");
             }
         }
-
-
     }
 }

@@ -20,6 +20,5 @@ namespace NazarMahal.Core.Entities
         public TimeSpan AppointmentTime { get; set; }
         public AppointmentStatus AppointmentStatus { get; set; }
         public DateTime DateCreated { get; set; }
-        public bool IsCancelled { get; set; }
     }
 }

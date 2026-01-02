@@ -1,5 +1,4 @@
 using Microsoft.Extensions.DependencyInjection;
-using NazarMahal.Application.AutoMapper;
 using NazarMahal.Application.Interfaces;
 using NazarMahal.Application.Services;
 
@@ -9,10 +8,6 @@ namespace NazarMahal.Application
     {
         public static IServiceCollection AddApplication(this IServiceCollection services)
         {
-            // AutoMapper
-            services.AddAutoMapper(typeof(MappingProfile));
-
-            // Application Services
             services.AddScoped<IGlassesService, GlassesService>();
             services.AddScoped<IAppointmentService, AppointmentService>();
             services.AddScoped<IUserService, UserService>();

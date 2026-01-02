@@ -1,18 +1,16 @@
-using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
-using NazarMahal.Core.Abstractions;
 using NazarMahal.Infrastructure.Data;
+using NazarMahal.Infrastructure.Mappers;
 using NazarMahal.Application.Interfaces.IRepository;
 using NazarMahal.Application.RequestDto.UserRequestDto;
 using NazarMahal.Application.ResponseDto.UserResponseDto;
 
 namespace NazarMahal.Infrastructure.Repository
 {
-    public class UserRepository(UserManager<ApplicationUser> userManager, IMapper mapper, RoleManager<ApplicationRole> roleManager) : IUserRepository
+    public class UserRepository(UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager) : IUserRepository
     {
         private readonly UserManager<ApplicationUser> _userManager = userManager;
-        private readonly IMapper _mapper = mapper;
         private readonly RoleManager<ApplicationRole> _roleManager = roleManager;
 
         public async Task<bool> ChangePasswordAsync(int userId, ChangeUserPasswordRequestDto changeUserPasswordRequestDto)
@@ -29,13 +27,13 @@ namespace NazarMahal.Infrastructure.Repository
         public async Task<IEnumerable<UserResponseDto>> GetAllUsersAsync()
         {
             var users = _userManager.Users.ToList();
-            return _mapper.Map<IEnumerable<UserResponseDto>>(users);
+            return users.ToUserResponseDtoList();
         }
 
         public async Task<UserResponseDto> GetUserByIdAsync(int userId)
         {
             var user = await _userManager.FindByIdAsync(userId.ToString());
-            return _mapper.Map<UserResponseDto>(user);
+            return user.ToUserResponseDto();
         }
 
         public async Task<bool> DisableUserAsync(int userId)
@@ -50,12 +48,11 @@ namespace NazarMahal.Infrastructure.Repository
 
         public async Task<UserResponseDto> AddUserAsync(CreateNewUserRequestDto createNewUserRequestDto)
         {
-            var user = _mapper.Map<ApplicationUser>(createNewUserRequestDto);
+            var user = createNewUserRequestDto.ToApplicationUser();
             var result = await _userManager.CreateAsync(user, createNewUserRequestDto.Password);
 
-            return result.Succeeded ? _mapper.Map<UserResponseDto>(user) : null;
+            return result.Succeeded ? user.ToUserResponseDto() : null;
         }
-
 
         public async Task<UserResponseDto> UpdateUserInfoAsync(int userId, string fullname, string email, string address, bool isDisabled, IFormFile? profilePicture)
         {
@@ -67,6 +64,7 @@ namespace NazarMahal.Infrastructure.Repository
 
             user.FullName = fullname;
             user.Email = email;
+            user.UserName = email;
             user.Address = address;
             user.IsDisabled = isDisabled;
 
@@ -95,16 +93,13 @@ namespace NazarMahal.Infrastructure.Repository
                 throw new InvalidOperationException("Failed to update user.");
             }
 
-            return _mapper.Map<UserResponseDto>(user);
+            return user.ToUserResponseDto();
         }
 
         public async Task<IList<UserResponseDto>> GetUserListByRoleId(string roleName)
         {
-
-            var user = await _userManager.GetUsersInRoleAsync(roleName);
-            return _mapper.Map<IList<UserResponseDto>>(user);
-
-
+            var users = await _userManager.GetUsersInRoleAsync(roleName);
+            return users.ToUserResponseDtoList().ToList();
         }
     }
 }

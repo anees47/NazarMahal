@@ -1,5 +1,6 @@
-﻿using NazarMahal.Core.Enums;
+using NazarMahal.Core.Enums;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace NazarMahal.Core.Entities;
 
@@ -7,7 +8,6 @@ public class Order
 {
     public int OrderId { get; set; }
 
-    // FK to Domain User
     public int UserId { get; set; }
 
     public decimal TotalAmount { get; set; }
@@ -34,11 +34,9 @@ public class Order
     [MaxLength(50)]
     public string? PaymentMethod { get; set; }
 
-    // ONE Order → ONE User
-    public Users User { get; set; } = null!;
-
     // ONE Order → MANY OrderItems
     public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+    
     public Order() { }
 
     public Order(int userId, decimal totalAmount, string? phoneNumber, string? userEmail, string orderNumber, string? firstName, string? lastName, string? paymentMethod)

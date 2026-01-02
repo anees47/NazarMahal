@@ -3,7 +3,6 @@ using NazarMahal.Core.Entities;
 using NazarMahal.Core.Enums;
 using NazarMahal.Application.Interfaces.IRepository;
 using NazarMahal.Application.ResponseDto.UserResponseDto;
-using System.Text;
 
 namespace NazarMahal.Infrastructure.Services
 {
@@ -16,11 +15,10 @@ namespace NazarMahal.Infrastructure.Services
 
         public async Task SendAppointmentConfirmationEmail(Appointment appointment)
         {
-            var user = await _userRepository.GetUserByIdAsync(appointment.UserId);
+                var user = await _userRepository.GetUserByIdAsync(appointment.UserId);
             var userEmail = user != null ? user.Email : appointment.Email;
             var userList = await _userRepository.GetUserListByRoleId(RoleEnum.Admin.ToString());
 
-            
             var emailMessage = GetAppointmentConfirmationTemplate(appointment, user);
             var emailRecipients = userList.Select(u => u.Email).ToList();
             emailRecipients.Add(userEmail);
@@ -159,7 +157,7 @@ namespace NazarMahal.Infrastructure.Services
 
         private string GetAppointmentConfirmationTemplate(Appointment appointment, UserResponseDto? user)
         {
-            var userName = user?.Fullname ?? appointment.FullName;
+            var userName = user?.FullName ?? appointment.FullName;
             var userEmail = user?.Email ?? appointment.Email;
             var userPhone = appointment.PhoneNumber;
 
@@ -245,7 +243,7 @@ namespace NazarMahal.Infrastructure.Services
         <div class='footer'>
             <p><strong>Contact Information:</strong></p>
             <p>Email: info@nazarmahal.com | Phone: +92 XXX XXXXXXX</p>
-            <p style='font-size: 12px; margin-top: 20px;'>� {DateTime.Now.Year} Nazar Mahal. All rights reserved.</p>
+            <p style='font-size: 12px; margin-top: 20px;'>© {DateTime.Now.Year} Nazar Mahal. All rights reserved.</p>
         </div>
     </div>
 </body>
@@ -254,7 +252,7 @@ namespace NazarMahal.Infrastructure.Services
 
         private string GetAppointmentCancellationTemplate(Appointment appointment, UserResponseDto? user)
         {
-            var userName = user?.Fullname ?? appointment.FullName;
+            var userName = user?.FullName ?? appointment.FullName;
 
             return $@"
 <!DOCTYPE html>
@@ -323,7 +321,7 @@ namespace NazarMahal.Infrastructure.Services
         <div class='footer'>
             <p><strong>Contact Information:</strong></p>
             <p>Email: info@nazarmahal.com | Phone: +92 XXX XXXXXXX</p>
-            <p style='font-size: 12px; margin-top: 20px;'>� {DateTime.Now.Year} Nazar Mahal. All rights reserved.</p>
+            <p style='font-size: 12px; margin-top: 20px;'>© {DateTime.Now.Year} Nazar Mahal. All rights reserved.</p>
         </div>
     </div>
 </body>
@@ -332,7 +330,7 @@ namespace NazarMahal.Infrastructure.Services
 
         private string GetAppointmentCompletionTemplate(Appointment appointment, UserResponseDto? user)
         {
-            var userName = user?.Fullname ?? appointment.FullName;
+            var userName = user?.FullName ?? appointment.FullName;
 
             return $@"
 <!DOCTYPE html>
@@ -406,7 +404,7 @@ namespace NazarMahal.Infrastructure.Services
         <div class='footer'>
             <p><strong>Contact Information:</strong></p>
             <p>Email: info@nazarmahal.com | Phone: +92 XXX XXXXXXX</p>
-            <p style='font-size: 12px; margin-top: 20px;'>� {DateTime.Now.Year} Nazar Mahal. All rights reserved.</p>
+            <p style='font-size: 12px; margin-top: 20px;'>© {DateTime.Now.Year} Nazar Mahal. All rights reserved.</p>
         </div>
     </div>
 </body>
@@ -415,7 +413,7 @@ namespace NazarMahal.Infrastructure.Services
 
         private string GetAppointmentUpdateTemplate(Appointment appointment, UserResponseDto? user)
         {
-            var userName = user?.Fullname ?? appointment.FullName;
+            var userName = user?.FullName ?? appointment.FullName;
 
             return $@"
 <!DOCTYPE html>
@@ -478,7 +476,7 @@ namespace NazarMahal.Infrastructure.Services
         <div class='footer'>
             <p><strong>Contact Information:</strong></p>
             <p>Email: info@nazarmahal.com | Phone: +92 XXX XXXXXXX</p>
-            <p style='font-size: 12px; margin-top: 20px;'>� {DateTime.Now.Year} Nazar Mahal. All rights reserved.</p>
+            <p style='font-size: 12px; margin-top: 20px;'>© {DateTime.Now.Year} Nazar Mahal. All rights reserved.</p>
         </div>
     </div>
 </body>
@@ -487,7 +485,7 @@ namespace NazarMahal.Infrastructure.Services
 
         private string GetAppointmentReminderTemplate(Appointment appointment, UserResponseDto? user)
         {
-            var userName = user?.Fullname ?? appointment.FullName;
+            var userName = user?.FullName ?? appointment.FullName;
 
             return $@"
 <!DOCTYPE html>
@@ -555,7 +553,7 @@ namespace NazarMahal.Infrastructure.Services
         <div class='footer'>
             <p><strong>Contact Information:</strong></p>
             <p>Email: info@nazarmahal.com | Phone: +92 XXX XXXXXXX</p>
-            <p style='font-size: 12px; margin-top: 20px;'>� {DateTime.Now.Year} Nazar Mahal. All rights reserved.</p>
+            <p style='font-size: 12px; margin-top: 20px;'>© {DateTime.Now.Year} Nazar Mahal. All rights reserved.</p>
         </div>
     </div>
 </body>
@@ -630,7 +628,7 @@ namespace NazarMahal.Infrastructure.Services
         <div class='footer'>
             <p><strong>Contact Information:</strong></p>
             <p>Email: info@nazarmahal.com | Phone: +92 XXX XXXXXXX</p>
-            <p style='font-size: 12px; margin-top: 20px;'>� {DateTime.Now.Year} Nazar Mahal. All rights reserved.</p>
+            <p style='font-size: 12px; margin-top: 20px;'>© {DateTime.Now.Year} Nazar Mahal. All rights reserved.</p>
         </div>
     </div>
 </body>
@@ -696,7 +694,7 @@ namespace NazarMahal.Infrastructure.Services
         <div class='footer'>
             <p><strong>Contact Information:</strong></p>
             <p>Email: info@nazarmahal.com | Phone: +92 XXX XXXXXXX</p>
-            <p style='font-size: 12px; margin-top: 20px;'>� {DateTime.Now.Year} Nazar Mahal. All rights reserved.</p>
+            <p style='font-size: 12px; margin-top: 20px;'>© {DateTime.Now.Year} Nazar Mahal. All rights reserved.</p>
         </div>
     </div>
 </body>
@@ -767,7 +765,7 @@ namespace NazarMahal.Infrastructure.Services
         <div class='footer'>
             <p><strong>Contact Information:</strong></p>
             <p>Email: info@nazarmahal.com | Phone: +92 XXX XXXXXXX</p>
-            <p style='font-size: 12px; margin-top: 20px;'>� {DateTime.Now.Year} Nazar Mahal. All rights reserved.</p>
+            <p style='font-size: 12px; margin-top: 20px;'>© {DateTime.Now.Year} Nazar Mahal. All rights reserved.</p>
         </div>
     </div>
 </body>
@@ -825,7 +823,7 @@ namespace NazarMahal.Infrastructure.Services
         <div class='footer'>
             <p><strong>Contact Information:</strong></p>
             <p>Email: info@nazarmahal.com | Phone: +92 XXX XXXXXXX</p>
-            <p style='font-size: 12px; margin-top: 20px;'>� {DateTime.Now.Year} Nazar Mahal. All rights reserved.</p>
+            <p style='font-size: 12px; margin-top: 20px;'>© {DateTime.Now.Year} Nazar Mahal. All rights reserved.</p>
         </div>
     </div>
 </body>
@@ -937,7 +935,7 @@ namespace NazarMahal.Infrastructure.Services
         <div class='footer'>
             <p><strong>Contact Information:</strong></p>
             <p>Email: info@nazarmahal.com | Phone: +92 XXX XXXXXXX</p>
-            <p style='font-size: 12px; margin-top: 20px;'>� {DateTime.Now.Year} Nazar Mahal. All rights reserved.</p>
+            <p style='font-size: 12px; margin-top: 20px;'>© {DateTime.Now.Year} Nazar Mahal. All rights reserved.</p>
         </div>
     </div>
 </body>
@@ -994,7 +992,7 @@ namespace NazarMahal.Infrastructure.Services
         <div class='footer'>
             <p><strong>Contact Information:</strong></p>
             <p>Email: info@nazarmahal.com | Phone: +92 XXX XXXXXXX</p>
-            <p style='font-size: 12px; margin-top: 20px;'>� {DateTime.Now.Year} Nazar Mahal. All rights reserved.</p>
+            <p style='font-size: 12px; margin-top: 20px;'>© {DateTime.Now.Year} Nazar Mahal. All rights reserved.</p>
         </div>
     </div>
 </body>

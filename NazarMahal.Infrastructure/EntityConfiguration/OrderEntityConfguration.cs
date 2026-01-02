@@ -44,7 +44,7 @@ public class OrderEntityConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(o => o.PaymentMethod)
             .HasMaxLength(50);
 
-        builder.HasOne(o => o.User)
+        builder.HasOne<ApplicationUser>()
             .WithMany(u => u.Orders)
             .HasForeignKey(o => o.UserId)
             .OnDelete(DeleteBehavior.Restrict);

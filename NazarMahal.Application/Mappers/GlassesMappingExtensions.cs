@@ -1,0 +1,163 @@
+using NazarMahal.Application.DTOs.GlassesDto;
+using NazarMahal.Core.Entities;
+using NazarMahal.Core.ReadModels;
+
+namespace NazarMahal.Application.Mappers
+{
+    /// <summary>
+    /// Custom mapping extensions for Glasses-related DTOs
+    /// </summary>
+    public static class GlassesMappingExtensions
+    {
+        /// <summary>
+        /// Map GlassesCategory to GlassesCategoryDto
+        /// </summary>
+        public static GlassesCategoryDto ToGlassesCategoryDto(this GlassesCategory category)
+        {
+            if (category == null) return null;
+
+            return new GlassesCategoryDto
+            {
+                Id = category.Id,
+                Name = category.Name,
+                IsActive = category.IsActive
+            };
+        }
+
+        /// <summary>
+        /// Map GlassesSubCategory to GlassesSubCategoryDto
+        /// </summary>
+        public static GlassesSubCategoryDto ToGlassesSubCategoryDto(this GlassesSubCategory subCategory)
+        {
+            if (subCategory == null) return null;
+
+            return new GlassesSubCategoryDto
+            {
+                Id = subCategory.Id,
+                CategoryId = subCategory.CategoryId,
+                Name = subCategory.Name,
+                IsActive = subCategory.IsActive
+            };
+        }
+
+        /// <summary>
+        /// Map GlassesSubCategoryDto back to GlassesSubCategory
+        /// </summary>
+        public static GlassesSubCategory ToGlassesSubCategory(this GlassesSubCategoryDto dto)
+        {
+            if (dto == null) return null;
+
+            return GlassesSubCategory.Create(dto.Name, dto.CategoryId, dto.IsActive);
+        }
+
+        /// <summary>
+        /// Map GlassesSubCategory to GlassesSubcategoriesListDto
+        /// </summary>
+        public static GlassesSubcategoriesListDto ToGlassesSubcategoriesListDto(this GlassesSubCategory subCategory)
+        {
+            if (subCategory == null) return null;
+
+            return new GlassesSubcategoriesListDto
+            {
+                Id = subCategory.Id,
+                Name = subCategory.Name,
+                CategoryId = subCategory.CategoryId,
+                IsActive = subCategory.IsActive
+            };
+        }
+
+        /// <summary>
+        /// Map Glasses to GlassesDto
+        /// </summary>
+        public static GlassesDto ToGlassesDto(this Glasses glasses)
+        {
+            if (glasses == null) return null;
+
+            return new GlassesDto
+            {
+                Id = glasses.Id,
+                GlassesName = glasses.Name,
+                Description = glasses.Description,
+                Price = glasses.Price,
+                Brand = glasses.Brand,
+                Model = glasses.Model,
+                FrameType = glasses.FrameType,
+                LensType = glasses.LensType,
+                Color = glasses.Color,
+                CategoryId = glasses.CategoryId,
+                SubCategoryId = glasses.SubCategoryId,
+                IsActive = glasses.IsActive,
+                AvailableQuanity = glasses.AvailableQuantity
+            };
+        }
+
+        /// <summary>
+        /// Map GlassesAttachmentReadModel to GlassesAttachmentDto
+        /// </summary>
+        public static GlassesAttachmentDto ToGlassesAttachmentDto(this GlassesAttachmentReadModel attachment)
+        {
+            if (attachment == null) return null;
+
+            return new GlassesAttachmentDto
+            {
+                Id = attachment.AttachmentId,
+                FileName = attachment.FileName,
+                FileType = attachment.FileType,
+                StoragePath = attachment.StoragePath,
+                ReferenceId = attachment.GlassesId
+            };
+        }
+
+        /// <summary>
+        /// Map GlassesReadModel to GlassesListDto with attachments
+        /// </summary>
+        public static GlassesListDto ToGlassesListDto(this GlassesReadModel glasses)
+        {
+            if (glasses == null) return null;
+
+            return new GlassesListDto
+            {
+                GlassesId = glasses.GlassesId,
+                GlassesName = glasses.GlassesName,
+                Description = glasses.Description,
+                Price = glasses.Price,
+                Brand = glasses.Brand,
+                Model = glasses.Model,
+                FrameType = glasses.FrameType,
+                LensType = glasses.LensType,
+                Color = glasses.Color,
+                CategoryId = glasses.CategoryId,
+                CategoryName = glasses.CategoryName,
+                SubCategoryId = glasses.SubCategoryId ?? 0,
+                SubCategoryName = glasses.SubCategoryName,
+                IsActive = glasses.IsActive,
+                AvailableQuantity = glasses.AvailableQuantity,
+                Attachments = glasses.AttachmentReadModels?.Select(a => a.ToGlassesAttachmentDto()).ToList() ?? new List<GlassesAttachmentDto>()
+            };
+        }
+
+        /// <summary>
+        /// Map IEnumerable of GlassesReadModel to List of GlassesListDto
+        /// </summary>
+        public static List<GlassesListDto> ToGlassesListDtoList(this IEnumerable<GlassesReadModel> glassesCollection)
+        {
+            if (glassesCollection == null) return new List<GlassesListDto>();
+            return glassesCollection.Select(g => g.ToGlassesListDto()).ToList();
+        }
+
+        /// <summary>
+        /// Map IEnumerable of GlassesSubcategoryReadModel to List of GlassesSubcategoriesListDto
+        /// </summary>
+        public static List<GlassesSubcategoriesListDto> ToGlassesSubcategoriesListDtoList(this IEnumerable<GlassesSubcategoryReadModel> subCategories)
+        {
+            if (subCategories == null) return new List<GlassesSubcategoriesListDto>();
+            return subCategories.Select(sc => new GlassesSubcategoriesListDto
+            {
+                Id = sc.Id,
+                Name = sc.Name,
+                CategoryId = sc.CategoryId,
+                IsActive = sc.IsActive
+            }).ToList();
+        }
+    }
+}

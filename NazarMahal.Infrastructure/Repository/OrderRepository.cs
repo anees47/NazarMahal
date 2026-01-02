@@ -25,7 +25,6 @@ namespace NazarMahal.Infrastructure.Repository
         public async Task<IEnumerable<Order>> RetrieveAllOrders()
         {
             return await _dbContext.Orders
-                .Include(o => o.User)
                 .Include(o => o.OrderItems)
                     .ThenInclude(oi => oi.Glasses)
                 .ToListAsync();
@@ -34,7 +33,6 @@ namespace NazarMahal.Infrastructure.Repository
         public async Task<IEnumerable<Order>> RetrieveOpenOrders()
         {
             return await _dbContext.Orders
-                .Include(o => o.User)
                 .Include(o => o.OrderItems)
                     .ThenInclude(oi => oi.Glasses)
                 .Where(o => o.OrderStatus == OrderStatus.New || o.OrderStatus == OrderStatus.InProgress)
@@ -44,7 +42,6 @@ namespace NazarMahal.Infrastructure.Repository
         public async Task<IEnumerable<Order>> RetrieveAllCompletedOrders()
         {
             return await _dbContext.Orders
-                .Include(o => o.User)
                 .Include(o => o.OrderItems)
                     .ThenInclude(oi => oi.Glasses)
                 .Where(o => o.OrderStatus == OrderStatus.Completed)
@@ -54,7 +51,6 @@ namespace NazarMahal.Infrastructure.Repository
         public async Task<IEnumerable<Order>> RetrieveAllCancelledOrders()
         {
             return await _dbContext.Orders
-                .Include(o => o.User)
                 .Include(o => o.OrderItems)
                     .ThenInclude(oi => oi.Glasses)
                 .Where(o => o.OrderStatus == OrderStatus.Cancelled)
@@ -64,7 +60,6 @@ namespace NazarMahal.Infrastructure.Repository
         public async Task<Order> GetOrderByOrderId(int orderId)
         {
             var order = await _dbContext.Orders
-                .Include(o => o.User)
                 .Include(o => o.OrderItems)
                     .ThenInclude(oi => oi.Glasses)
                 .FirstOrDefaultAsync(o => o.OrderId == orderId);
@@ -96,7 +91,6 @@ namespace NazarMahal.Infrastructure.Repository
         public async Task<IEnumerable<Order>> GetOrderByUserId(int userId)
         {
             return await _dbContext.Orders
-                .Include(o => o.User)
                 .Include(o => o.OrderItems)
                     .ThenInclude(oi => oi.Glasses)
                 .Where(o => o.UserId == userId)

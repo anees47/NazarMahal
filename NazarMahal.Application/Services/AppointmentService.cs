@@ -1,8 +1,8 @@
-using AutoMapper;
 using Microsoft.Extensions.Configuration;
 using NazarMahal.Application.DTOs.AppointmentDto;
 using NazarMahal.Application.Interfaces;
 using NazarMahal.Application.Interfaces.IRepository;
+using NazarMahal.Application.Mappers;
 using NazarMahal.Application.RequestDto.AppointmentRequestDto;
 using NazarMahal.Core.ActionResponses;
 using NazarMahal.Core.Common;
@@ -15,13 +15,11 @@ namespace NazarMahal.Application.Services
         IEmailService emailService,
         IUserRepository userRepository,
         IAppointmentRepository appointmentRepository,
-        IMapper mapper,
         INotificationService notificationService,
         IConfiguration configuration) : IAppointmentService
     {
         private readonly IUserRepository _userRepository = userRepository;
         private readonly IAppointmentRepository _appointmentRepository = appointmentRepository;
-        private readonly IMapper _mapper = mapper;
         private readonly INotificationService _notificationService = notificationService;
         private readonly IEmailService _emailService = emailService;
         private readonly IConfiguration _configuration = configuration;
@@ -110,22 +108,7 @@ namespace NazarMahal.Application.Services
 
                 await _notificationService.SendAppointmentConfirmationEmail(appointment);
 
-                var appointmentDto = new AppointmentDto
-                {
-                    Id = appointment.Id,
-                    UserId = appointment.UserId,
-                    FullName = scheduleAppointmentRequestDto.FullName,
-                    Email = scheduleAppointmentRequestDto.Email,
-                    PhoneNumber = scheduleAppointmentRequestDto.PhoneNumber,
-                    ReasonForVisit = scheduleAppointmentRequestDto.ReasonForVisit,
-                    AppointmentType = scheduleAppointmentRequestDto.AppointmentType,
-                    AppointmentDate = scheduleAppointmentRequestDto.AppointmentDate,
-                    AppointmentTime = scheduleAppointmentRequestDto.AppointmentTime,
-                    AppointmentStatus = scheduleAppointmentRequestDto.AppointmentStatus,
-                    AdditionalNotes = scheduleAppointmentRequestDto.AdditionalNotes,
-                    DateCreated = PakistanTimeHelper.Now
-                };
-
+                var appointmentDto = appointment.ToAppointmentDto();
                 return ActionResponse<AppointmentDto>.Ok(appointmentDto, "Appointment booked successfully.");
             }
             catch (Exception ex)
@@ -142,7 +125,7 @@ namespace NazarMahal.Application.Services
                 var appointment = await _appointmentRepository.CancelAppointment(appointmentCancelRequestDto.AppointmentId);
                 if (appointment == null) return new NotFoundActionResponse<AppointmentDto>($"No Appointment is found for appointmentId {appointmentCancelRequestDto.AppointmentId}");
 
-                var appointmentDto = _mapper.Map<AppointmentDto>(appointment);
+                var appointmentDto = appointment.ToAppointmentDto();
                 return ActionResponse<AppointmentDto>.Ok(appointmentDto, "Appointment Cancelled Successfully");
             }
             catch (Exception)
@@ -194,7 +177,7 @@ namespace NazarMahal.Application.Services
                     await _notificationService.SendAppointmentCompletionEmail(appointment);
                 }
 
-                var appointmentDto = _mapper.Map<AppointmentDto>(appointment);
+                var appointmentDto = appointment.ToAppointmentDto();
                 return new OkActionResponse<AppointmentDto>(appointmentDto, $"Appointment status updated to {appointmentCancelRequestDto.AppointmentStatus} successfully");
             }
             catch (Exception ex)
@@ -247,7 +230,7 @@ namespace NazarMahal.Application.Services
                 }
 
                 await _notificationService.SendAppointmentUpdateConfirmationEmail(updateAppointment);
-                var appointmentDto = _mapper.Map<AppointmentDto>(updateAppointment);
+                var appointmentDto = updateAppointment.ToAppointmentDto();
                 return ActionResponse<AppointmentDto>.Ok(appointmentDto, "Appointment Updated Successfully");
 
             }
@@ -267,7 +250,7 @@ namespace NazarMahal.Application.Services
                     return new NotFoundActionResponse<IEnumerable<AppointmentDto>>("No appointments found.");
                 }
 
-                var appointmentDtos = _mapper.Map<IEnumerable<AppointmentDto>>(appointments);
+                var appointmentDtos = appointments.ToAppointmentDtoList();
                 return new OkActionResponse<IEnumerable<AppointmentDto>>(appointmentDtos, "Appointments retrieved successfully");
             }
             catch (Exception)
@@ -292,8 +275,7 @@ namespace NazarMahal.Application.Services
                     return new NotFoundActionResponse<IEnumerable<AppointmentDto>>("No appointments found for the user.");
                 }
 
-                var appointmentDtos = _mapper.Map<IEnumerable<AppointmentDto>>(appointments);
-
+                var appointmentDtos = appointments.ToAppointmentDtoList();
                 return new OkActionResponse<IEnumerable<AppointmentDto>>(appointmentDtos);
             }
             catch (Exception)
@@ -313,7 +295,7 @@ namespace NazarMahal.Application.Services
                     return new NotFoundActionResponse<AppointmentDto>($"Appointment with ID {appointmentId} not found.");
                 }
 
-                var appointmentDto = _mapper.Map<AppointmentDto>(appointment);
+                var appointmentDto = appointment.ToAppointmentDto();
                 return new OkActionResponse<AppointmentDto>(appointmentDto, "Appointment retrieved successfully");
             }
             catch (Exception)
@@ -332,7 +314,7 @@ namespace NazarMahal.Application.Services
                     return new NotFoundActionResponse<IEnumerable<AppointmentDto>>($"No appointments found between {startDate:yyyy-MM-dd} and {endDate:yyyy-MM-dd}.");
                 }
 
-                var appointmentDtos = _mapper.Map<IEnumerable<AppointmentDto>>(appointments);
+                var appointmentDtos = appointments.ToAppointmentDtoList();
                 return new OkActionResponse<IEnumerable<AppointmentDto>>(appointmentDtos, "Appointments retrieved successfully");
             }
             catch (Exception)
@@ -351,7 +333,7 @@ namespace NazarMahal.Application.Services
                     return new NotFoundActionResponse<IEnumerable<AppointmentDto>>($"No {status} appointments found.");
                 }
 
-                var appointmentDtos = _mapper.Map<IEnumerable<AppointmentDto>>(appointments);
+                var appointmentDtos = appointments.ToAppointmentDtoList();
                 return new OkActionResponse<IEnumerable<AppointmentDto>>(appointmentDtos, $"{status} appointments retrieved successfully");
             }
             catch (Exception)
@@ -370,7 +352,7 @@ namespace NazarMahal.Application.Services
                     return new NotFoundActionResponse<IEnumerable<AppointmentDto>>("No appointments found for today.");
                 }
 
-                var appointmentDtos = _mapper.Map<IEnumerable<AppointmentDto>>(appointments);
+                var appointmentDtos = appointments.ToAppointmentDtoList();
                 return new OkActionResponse<IEnumerable<AppointmentDto>>(appointmentDtos, "Today's appointments retrieved successfully");
             }
             catch (Exception)
@@ -394,7 +376,7 @@ namespace NazarMahal.Application.Services
                     return new NotFoundActionResponse<IEnumerable<AppointmentDto>>($"No upcoming appointments found for the next {days} days.");
                 }
 
-                var appointmentDtos = _mapper.Map<IEnumerable<AppointmentDto>>(appointments);
+                var appointmentDtos = appointments.ToAppointmentDtoList();
                 return new OkActionResponse<IEnumerable<AppointmentDto>>(appointmentDtos, $"Upcoming appointments for the next {days} days retrieved successfully");
             }
             catch (Exception)
@@ -413,7 +395,7 @@ namespace NazarMahal.Application.Services
                     return new NotFoundActionResponse<AppointmentDto>($"Appointment with ID {appointmentId} not found.");
                 }
 
-                var appointmentDto = _mapper.Map<AppointmentDto>(appointment);
+                var appointmentDto = appointment.ToAppointmentDto();
                 return new OkActionResponse<AppointmentDto>(appointmentDto, "Appointment completed successfully");
             }
             catch (Exception)
@@ -438,7 +420,7 @@ namespace NazarMahal.Application.Services
                     return new NotFoundActionResponse<IEnumerable<AppointmentDto>>($"No appointments found for '{fullName}'{dateFilter}.");
                 }
 
-                var appointmentDtos = _mapper.Map<IEnumerable<AppointmentDto>>(appointments);
+                var appointmentDtos = appointments.ToAppointmentDtoList();
                 return new OkActionResponse<IEnumerable<AppointmentDto>>(appointmentDtos, "Search results retrieved successfully");
             }
             catch (Exception)
