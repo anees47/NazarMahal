@@ -9,7 +9,8 @@ namespace NazarMahal.Application.Interfaces.IRepository
     {
         Task<UserResponseDto> GetUserByIdAsync(int userId);
         Task<IEnumerable<UserResponseDto>> GetAllUsersAsync();
-        Task<bool> DisableUserAsync(int userId);
+        Task<bool> EnableUserStatusAsync(int userId);
+        Task<bool> DisableUserStatusAsync(int userId);
         Task<bool> ChangePasswordAsync(int userId, ChangeUserPasswordRequestDto changeUserPasswordRequestDto);
         Task<UserResponseDto> AddUserAsync(CreateNewUserRequestDto createNewUserRequestDto);
         Task<UserResponseDto> UpdateUserInfoAsync(int userId, string fullname, string email, string address, bool isDisabled, IFormFile? profilePicture);

@@ -30,7 +30,6 @@ namespace NazarMahal.Application.Services
             {
                 var bookedAppointments = await _appointmentRepository.GetBookedTimeSlotsByDate(date);
 
-                // Get business hours from configuration
                 var startHour = _configuration.GetValue<int>("BusinessHours:StartHour", 11);
                 var endHour = _configuration.GetValue<int>("BusinessHours:EndHour", 19);
                 var slotIntervalMinutes = _configuration.GetValue<int>("BusinessHours:SlotIntervalMinutes", 30);
@@ -66,13 +65,11 @@ namespace NazarMahal.Application.Services
                     return ActionResponse<AppointmentDto>.Fail("Phone number must be 11 digits.");
                 }
 
-                // Validate appointment date is not in the past
                 if (scheduleAppointmentRequestDto.AppointmentDate < DateOnly.FromDateTime(DateTime.Today))
                 {
                     return ActionResponse<AppointmentDto>.Fail("Cannot book appointments in the past.");
                 }
 
-                // Validate appointment time is not in the past for today's appointments
                 if (scheduleAppointmentRequestDto.AppointmentDate == DateOnly.FromDateTime(DateTime.Today) &&
                     scheduleAppointmentRequestDto.AppointmentTime < TimeOnly.FromDateTime(DateTime.Now).ToTimeSpan())
                 {
@@ -104,8 +101,19 @@ namespace NazarMahal.Application.Services
                     DateCreated = PakistanTimeHelper.Now
                 };
 
-                await _appointmentRepository.AddAppointmentAsync(appointment);
+                if(scheduleAppointmentRequestDto.UserId.HasValue)
+                {
+                    var user = await _userRepository.GetUserByIdAsync(scheduleAppointmentRequestDto.UserId.Value);
+                    if (user != null)
+                    {
+                        appointment.UserId = user.Id;
+                        appointment.FullName = scheduleAppointmentRequestDto.FullName ?? user.FullName;
+                        appointment.Email = scheduleAppointmentRequestDto.FullName ?? user.Email;
+                    }
+                }
 
+               await _appointmentRepository.AddAppointmentAsync(appointment);
+               
                 await _notificationService.SendAppointmentConfirmationEmail(appointment);
 
                 var appointmentDto = appointment.ToAppointmentDto();
@@ -138,7 +146,6 @@ namespace NazarMahal.Application.Services
         {
             try
             {
-                // Validate input
                 if (appointmentCancelRequestDto == null)
                 {
                     return new FailActionResponse<AppointmentDto>("Invalid request. Request body cannot be null.");
@@ -149,7 +156,6 @@ namespace NazarMahal.Application.Services
                     return new FailActionResponse<AppointmentDto>("Invalid appointment ID. Appointment ID must be greater than 0.");
                 }
 
-                // Get the appointment
                 var appointment = await _appointmentRepository.GetAppointmentById(appointmentCancelRequestDto.AppointmentId);
 
                 if (appointment == null)
@@ -157,13 +163,10 @@ namespace NazarMahal.Application.Services
                     return new NotFoundActionResponse<AppointmentDto>($"No appointment found with ID {appointmentCancelRequestDto.AppointmentId}");
                 }
 
-                // Update the appointment status
                 appointment.AppointmentStatus = appointmentCancelRequestDto.AppointmentStatus;
 
-                // Save changes through repository
                 await _appointmentRepository.UpdateAppointment(appointment);
 
-                // Send notification based on status
                 if (appointmentCancelRequestDto.AppointmentStatus == AppointmentEnums.AppointmentStatus.Cancelled)
                 {
                     await _notificationService.SendAppointmentCancellationEmail(appointment);
@@ -194,19 +197,12 @@ namespace NazarMahal.Application.Services
                 {
                     return new NotFoundActionResponse<AppointmentDto>("Appointment update request is invalid.");
                 }
-                var user = await _userRepository.GetUserByIdAsync(appointmentUpdateRequestDto.UserId);
-                if (user == null)
-                {
-                    return new NotFoundActionResponse<AppointmentDto>("User is not found");
-                }
-
-                // Validate appointment date is not in the past
+             
                 if (appointmentUpdateRequestDto.AppointmentDate < DateOnly.FromDateTime(DateTime.Today))
                 {
                     return new FailActionResponse<AppointmentDto>("Cannot update appointments to past dates.");
                 }
 
-                // Validate appointment time is not in the past for today's appointments
                 if (appointmentUpdateRequestDto.AppointmentDate == DateOnly.FromDateTime(DateTime.Today) &&
                     appointmentUpdateRequestDto.AppointmentTime < TimeOnly.FromDateTime(DateTime.Now).ToTimeSpan())
                 {
@@ -284,7 +280,6 @@ namespace NazarMahal.Application.Services
             }
         }
 
-        // New service methods for additional endpoints
         public async Task<ActionResponse<AppointmentDto>> GetAppointmentById(int appointmentId)
         {
             try

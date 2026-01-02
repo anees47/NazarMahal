@@ -9,12 +9,23 @@ namespace NazarMahal.Application.Mappers
     /// </summary>
     public static class GlassesMappingExtensions
     {
-        /// <summary>
-        /// Map GlassesCategory to GlassesCategoryDto
-        /// </summary>
+
+        public static GlassesCategoryDto ToGlassesCategoryDto(this GlassesCategoryReadModel category)
+        {
+            if (category == null)
+                return null;
+
+            return new GlassesCategoryDto
+            {
+                Id = category.Id,
+                Name = category.Name,
+                IsActive = category.IsActive
+            };
+        }
         public static GlassesCategoryDto ToGlassesCategoryDto(this GlassesCategory category)
         {
-            if (category == null) return null;
+            if (category == null)
+                return null;
 
             return new GlassesCategoryDto
             {
@@ -24,9 +35,6 @@ namespace NazarMahal.Application.Mappers
             };
         }
 
-        /// <summary>
-        /// Map GlassesSubCategory to GlassesSubCategoryDto
-        /// </summary>
         public static GlassesSubCategoryDto ToGlassesSubCategoryDto(this GlassesSubCategory subCategory)
         {
             if (subCategory == null) return null;
@@ -40,9 +48,7 @@ namespace NazarMahal.Application.Mappers
             };
         }
 
-        /// <summary>
-        /// Map GlassesSubCategoryDto back to GlassesSubCategory
-        /// </summary>
+
         public static GlassesSubCategory ToGlassesSubCategory(this GlassesSubCategoryDto dto)
         {
             if (dto == null) return null;
@@ -50,9 +56,6 @@ namespace NazarMahal.Application.Mappers
             return GlassesSubCategory.Create(dto.Name, dto.CategoryId, dto.IsActive);
         }
 
-        /// <summary>
-        /// Map GlassesSubCategory to GlassesSubcategoriesListDto
-        /// </summary>
         public static GlassesSubcategoriesListDto ToGlassesSubcategoriesListDto(this GlassesSubCategory subCategory)
         {
             if (subCategory == null) return null;
@@ -66,9 +69,7 @@ namespace NazarMahal.Application.Mappers
             };
         }
 
-        /// <summary>
-        /// Map Glasses to GlassesDto
-        /// </summary>
+
         public static GlassesDto ToGlassesDto(this Glasses glasses)
         {
             if (glasses == null) return null;
@@ -91,9 +92,6 @@ namespace NazarMahal.Application.Mappers
             };
         }
 
-        /// <summary>
-        /// Map GlassesAttachmentReadModel to GlassesAttachmentDto
-        /// </summary>
         public static GlassesAttachmentDto ToGlassesAttachmentDto(this GlassesAttachmentReadModel attachment)
         {
             if (attachment == null) return null;
@@ -108,9 +106,7 @@ namespace NazarMahal.Application.Mappers
             };
         }
 
-        /// <summary>
-        /// Map GlassesReadModel to GlassesListDto with attachments
-        /// </summary>
+
         public static GlassesListDto ToGlassesListDto(this GlassesReadModel glasses)
         {
             if (glasses == null) return null;
@@ -136,18 +132,12 @@ namespace NazarMahal.Application.Mappers
             };
         }
 
-        /// <summary>
-        /// Map IEnumerable of GlassesReadModel to List of GlassesListDto
-        /// </summary>
         public static List<GlassesListDto> ToGlassesListDtoList(this IEnumerable<GlassesReadModel> glassesCollection)
         {
             if (glassesCollection == null) return new List<GlassesListDto>();
             return glassesCollection.Select(g => g.ToGlassesListDto()).ToList();
         }
 
-        /// <summary>
-        /// Map IEnumerable of GlassesSubcategoryReadModel to List of GlassesSubcategoriesListDto
-        /// </summary>
         public static List<GlassesSubcategoriesListDto> ToGlassesSubcategoriesListDtoList(this IEnumerable<GlassesSubcategoryReadModel> subCategories)
         {
             if (subCategories == null) return new List<GlassesSubcategoriesListDto>();

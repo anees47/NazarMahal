@@ -22,7 +22,7 @@ namespace NazarMahal.Application.RequestDto.AppointmentRequestDto
         
         [Required(ErrorMessage = "Phone number is required")]
         [RegularExpression(@"^03\d{9}$", ErrorMessage = "Phone number must be 11 digits.")]
-        public string PhoneNumber { get; set; }
+        public string? PhoneNumber { get; set; }
         
         public string? ReasonForVisit { get; set; }
         public string? AdditionalNotes { get; set; }

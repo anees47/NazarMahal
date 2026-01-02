@@ -36,7 +36,7 @@ namespace NazarMahal.Infrastructure.Repository
             return user.ToUserResponseDto();
         }
 
-        public async Task<bool> DisableUserAsync(int userId)
+        public async Task<bool> DisableUserStatusAsync(int userId)
         {
             var user = await _userManager.FindByIdAsync(userId.ToString());
             if (user == null) return false;
@@ -45,6 +45,17 @@ namespace NazarMahal.Infrastructure.Repository
             var result = await _userManager.UpdateAsync(user);
             return result.Succeeded;
         }
+        public async Task<bool> EnableUserStatusAsync(int userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null)
+                return false;
+
+            user.IsDisabled = false;
+            var result = await _userManager.UpdateAsync(user);
+            return result.Succeeded;
+        }
+
 
         public async Task<UserResponseDto> AddUserAsync(CreateNewUserRequestDto createNewUserRequestDto)
         {

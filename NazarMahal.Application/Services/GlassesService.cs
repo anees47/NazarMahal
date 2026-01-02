@@ -48,7 +48,7 @@ namespace NazarMahal.Application.Services
                 var savedCategory = await _glassesRepository.AddGlassesCategory(newGlassesCategory);
                 await _glassesRepository.CompletedAsync();
 
-                return new OkActionResponse<GlassesCategoryDto>(newGlassesCategory.ToGlassesCategoryDto());
+                return new OkActionResponse<GlassesCategoryDto>(savedCategory.ToGlassesCategoryDto());
             }
             catch (Exception ex)
             {

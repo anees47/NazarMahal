@@ -43,9 +43,6 @@ namespace NazarMahal.Infrastructure.Repository
             var appointment = await _dbContext.Appointments.Where(a => a.Id == appointmentUpdateRequestDto.AppointmentId).FirstOrDefaultAsync();
             if (appointment != null)
             {
-                appointment.FullName = appointmentUpdateRequestDto.FullName;
-                appointment.Email = appointmentUpdateRequestDto.Email;
-                appointment.PhoneNumber = appointmentUpdateRequestDto.PhoneNumber;
                 appointment.AdditionalNotes = appointmentUpdateRequestDto.AdditionalNotes;
                 appointment.AppointmentDate = appointmentUpdateRequestDto.AppointmentDate;
                 appointment.AppointmentTime = appointmentUpdateRequestDto.AppointmentTime;

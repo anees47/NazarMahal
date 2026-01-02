@@ -85,7 +85,7 @@ namespace NazarMahal.Application.Services
             }
         }
 
-        public async Task<ActionResponse<bool>> DisableUserByIdAsync(int userId)
+        public async Task<ActionResponse<bool>> UpdateUserStatusAsync(int userId)
         {
             try
             {
@@ -94,12 +94,18 @@ namespace NazarMahal.Application.Services
 
                 var user = await _userRepository.GetUserByIdAsync(userId);
                 if (user == null) return new NotFoundActionResponse<bool>("User not found");
+                if(user.IsDisabled)
+                {
+                    var isDisable = await _userRepository.DisableUserStatusAsync(userId);
+                    if (!isDisable)
+                        return new FailActionResponse<bool>("Failed to disable user");
+                }
 
-                var isUpdated = await _userRepository.DisableUserAsync(userId);
+                var isUpdated = await _userRepository.EnableUserStatusAsync(userId);
                 if (!isUpdated)
-                    return new FailActionResponse<bool>("Failed to disable user");
+                    return new FailActionResponse<bool>("Failed to enable user");
 
-                return new OkActionResponse<bool>(true, "User disabled successfully");
+                return new OkActionResponse<bool>(true, "User Status updated successfully");
             }
             catch (Exception)
             {
@@ -150,7 +156,7 @@ namespace NazarMahal.Application.Services
                     updateUserRequest.UserId, 
                     updateUserRequest.Fullname, 
                     updateUserRequest.Email, 
-                    updateUserRequest.Address, 
+                    updateUserRequest.Address,
                     updateUserRequest.IsDisabled, 
                     updateUserRequest.ProfilePicture);
                 

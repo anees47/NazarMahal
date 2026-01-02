@@ -15,80 +15,50 @@ namespace NazarMahal.API.Controllers
     [Authorize]
     public class UsersController(IUserService userService) : ControllerBase
     {
-        private readonly IUserService _userService = userService;
-
-        /// <summary>
-        /// Get all users
-        /// </summary>
         [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.SuperAdmin}")]
         [HttpGet]
         public async Task<ActionResult<ApiResponseDto<IEnumerable<UserListResponseDto>>>> GetUsers()
         {
-            var response = await _userService.GetAllUserAsync();
+            var response = await userService.GetAllUserAsync();
             return response.ToApiResponse();
         }
 
-        /// <summary>
-        /// Get user by ID
-        /// </summary>
         [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.SuperAdmin}")]
         [HttpGet("{id}")]
         public async Task<ActionResult<ApiResponseDto<UserResponseDto>>> GetUser(int id)
         {
-            var response = await _userService.GetUserByIdAsync(id);
+            var response = await userService.GetUserByIdAsync(id);
             return response.ToApiResponse();
         }
 
-        /// <summary>
-        /// Create a new user
-        /// </summary>
         [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.SuperAdmin}")]
         [HttpPost]
         public async Task<ActionResult<ApiResponseDto<UserResponseDto>>> CreateUser([FromBody] CreateNewUserRequestDto request)
         {
-            var response = await _userService.CreateNewUser(request);
+            var response = await userService.CreateNewUser(request);
             return response.ToApiResponse();
         }
 
-        /// <summary>
-        /// Update user information
-        /// </summary>
         [HttpPut("{id}")]
         public async Task<ActionResult<ApiResponseDto<UserResponseDto>>> UpdateUser(int id, [FromBody] UpdateUserRequestDto request)
         {
             request.UserId = id;
-            var response = await _userService.UpdateUserInfoByIdAsync(request);
+            var response = await userService.UpdateUserInfoByIdAsync(request);
             return response.ToApiResponse();
         }
 
-        /// <summary>
-        /// Update user status/properties (disable, activate, etc.)
-        /// Body:
-        /// {
-        ///   "isDisabled": true/false
-        /// }
-        /// </summary>
         [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.SuperAdmin}")]
         [HttpPatch("{id}")]
         public async Task<ActionResult<ApiResponseDto<bool>>> UpdateUserStatus(int id, [FromBody] UpdateUserStatusRequestDto request)
         {
-            if (request.IsDisabled)
-            {
-                var response = await _userService.DisableUserByIdAsync(id);
-                return response.ToApiResponse();
-            }
-
-            var enableResponse = new OkActionResponse<bool>(true, "User status updated successfully");
-            return enableResponse.ToApiResponse();
+            var response = await userService.UpdateUserStatusAsync(id);
+            return response.ToApiResponse();
         }
 
-        /// <summary>
-        /// Change user password
-        /// </summary>
         [HttpPatch("{id}/password")]
         public async Task<ActionResult<ApiResponseDto<bool>>> ChangePassword(int id, [FromBody] ChangeUserPasswordRequestDto request)
         {
-            var response = await _userService.ChangePasswordByIdAsync(id, request);
+            var response = await userService.ChangePasswordByIdAsync(id, request);
             return response.ToApiResponse();
         }
     }

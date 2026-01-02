@@ -10,7 +10,7 @@ namespace NazarMahal.Application.Interfaces
         Task<ActionResponse<UserResponseDto>> CreateNewUser(CreateNewUserRequestDto createNewUserRequestDto);
         Task<ActionResponse<UserResponseDto>> UpdateUserInfoByIdAsync(UpdateUserRequestDto updateUserRequest);
         Task<ActionResponse<IEnumerable<UserListResponseDto>>> GetAllUserAsync();
-        Task<ActionResponse<bool>> DisableUserByIdAsync(int userId);
+        Task<ActionResponse<bool>> UpdateUserStatusAsync(int userId);
         Task<ActionResponse<bool>> ChangePasswordByIdAsync(int userId, ChangeUserPasswordRequestDto changePasswordRequest);
     }
 }
