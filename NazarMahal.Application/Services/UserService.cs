@@ -1,6 +1,7 @@
 using NazarMahal.Application.Interfaces;
 using NazarMahal.Application.Interfaces.IRepository;
 using NazarMahal.Application.Mappers;
+using NazarMahal.Application.Models;
 using NazarMahal.Application.RequestDto.UserRequestDto;
 using NazarMahal.Application.ResponseDto.UserResponseDto;
 using NazarMahal.Core.ActionResponses;
@@ -72,7 +73,11 @@ namespace NazarMahal.Application.Services
 
                 if (changePasswordRequest.NewPassword != changePasswordRequest.ConfirmPassword)
                     return new FailActionResponse<bool>(false, "New Password and confirm password do not match");
-                
+
+                var isCurrentValid = await _userRepository.VerifyCurrentPasswordAsync(userId, changePasswordRequest.CurrentPassword);
+                if (!isCurrentValid)
+                    return new FailActionResponse<bool>(false, "Current password is incorrect.");
+
                 var isPasswordChanged = await _userRepository.ChangePasswordAsync(userId, changePasswordRequest);
                 if (!isPasswordChanged)
                     return new FailActionResponse<bool>("Failed to change the password");
@@ -84,7 +89,7 @@ namespace NazarMahal.Application.Services
                 return new FailActionResponse<bool>($"Error occurred in UserService.");
             }
         }
-
+      
         public async Task<ActionResponse<bool>> UpdateUserStatusAsync(int userId)
         {
             try

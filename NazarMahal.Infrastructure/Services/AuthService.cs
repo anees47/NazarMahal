@@ -326,33 +326,6 @@ namespace NazarMahal.Infrastructure.Services
             }
         }
 
-        public async Task<ActionResponse<MessageResponseDto>> ChangePassword(string userId, ChangePasswordRequest model)
-        {
-            try
-            {
-                if (model == null)
-                    return new FailActionResponse<MessageResponseDto>("Invalid data.");
-
-                if (model.NewPassword != model.ConfirmPassword)
-                    return new FailActionResponse<MessageResponseDto>("Passwords do not match.");
-
-                var user = await _userManager.FindByIdAsync(userId);
-                if (user == null)
-                    return new NotFoundActionResponse<MessageResponseDto>("User not found.");
-
-                var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
-                if (!result.Succeeded)
-                    return new FailActionResponse<MessageResponseDto>(result.Errors.Select(e => e.Description).ToList());
-
-                return new OkActionResponse<MessageResponseDto>(
-                    new MessageResponseDto { Message = "Password changed successfully." });
-            }
-            catch (Exception ex)
-            {
-                return new FailActionResponse<MessageResponseDto>($"Error occurred in ChangePassword: {ex.Message}");
-            }
-        }
-
         public async Task<ActionResponse<TokenResponseDto>> RefreshToken(string userId)
         {
             try

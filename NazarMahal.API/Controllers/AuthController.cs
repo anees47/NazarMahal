@@ -17,9 +17,7 @@ namespace NazarMahal.API.Controllers
     {
         private readonly IAuthService _authService = authService;
 
-        /// <summary>
-        /// Register a new user account
-        /// </summary>
+
         [AllowAnonymous]
         [HttpPost("register")]
         public async Task<ActionResult<ApiResponseDto<RegisterResponseDto>>> Register([FromBody] RegisterModel model, [FromServices] NazarMahal.Core.Abstractions.IRequestContextAccessor requestContext)
@@ -28,9 +26,7 @@ namespace NazarMahal.API.Controllers
             return response.ToApiResponse();
         }
 
-        /// <summary>
-        /// Login with email and password
-        /// </summary>
+
         [AllowAnonymous]
         [HttpPost("login")]
         public async Task<ActionResult<ApiResponseDto<LoginResponseDto>>> Login([FromBody] LoginModel model)
@@ -39,9 +35,7 @@ namespace NazarMahal.API.Controllers
             return response.ToApiResponse();
         }
 
-        /// <summary>
-        /// Logout the current user
-        /// </summary>
+
         [HttpPost("logout")]
         public async Task<ActionResult<ApiResponseDto<MessageResponseDto>>> Logout()
         {
@@ -55,9 +49,7 @@ namespace NazarMahal.API.Controllers
             return response.ToApiResponse();
         }
 
-        /// <summary>
-        /// Refresh authentication token
-        /// </summary>
+
         [HttpPost("refresh-token")]
         public async Task<ActionResult<ApiResponseDto<TokenResponseDto>>> RefreshToken()
         {
@@ -82,9 +74,7 @@ namespace NazarMahal.API.Controllers
             return response.ToApiResponse();
         }
 
-        /// <summary>
-        /// Reset password with token
-        /// </summary>
+
         [AllowAnonymous]
         [HttpPost("reset-password")]
         public async Task<ActionResult<ApiResponseDto<MessageResponseDto>>> ResetPassword([FromBody] ResetPasswordRequest model)
@@ -93,9 +83,7 @@ namespace NazarMahal.API.Controllers
             return response.ToApiResponse();
         }
 
-        /// <summary>
-        /// Confirm email with token
-        /// </summary>
+
         [AllowAnonymous]
         [HttpGet("confirm-email")]
         public async Task<ActionResult<ApiResponseDto<MessageResponseDto>>> ConfirmEmail(string userId, string token)
@@ -104,9 +92,6 @@ namespace NazarMahal.API.Controllers
             return response.ToApiResponse();
         }
 
-        /// <summary>
-        /// Validate password reset token
-        /// </summary>
         [AllowAnonymous]
         [HttpGet("validate-reset-token")]
         public async Task<ActionResult<ApiResponseDto<MessageResponseDto>>> ValidateResetToken(string userId, string token)
@@ -115,26 +100,9 @@ namespace NazarMahal.API.Controllers
             return response.ToApiResponse();
         }
 
-        /// <summary>
-        /// Change password for current user
-        /// </summary>
-        [HttpPost("change-password")]
-        public async Task<ActionResult<ApiResponseDto<MessageResponseDto>>> ChangePassword([FromBody] ChangePasswordRequest model)
-        {
-            var userId = User.FindFirst("UserId")?.Value;
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized(new { Message = "User not authenticated." });
-            }
+       
 
-            var response = await _authService.ChangePassword(userId, model);
-            return response.ToApiResponse();
-        }
-
-        /// <summary>
-        /// Get current user profile
-        /// </summary>
-        [HttpGet("profile")]
+        [HttpGet("GetCurrentUser")]
         public async Task<ActionResult<ApiResponseDto<UserProfileResponseDto>>> GetCurrentUser()
         {
             var userId = User.FindFirst("UserId")?.Value;
@@ -148,24 +116,7 @@ namespace NazarMahal.API.Controllers
         }
 
         /// <summary>
-        /// Update current user profile
-        /// </summary>
-        [HttpPut("profile")]
-        public async Task<ActionResult<ApiResponseDto<UserProfileResponseDto>>> UpdateProfile([FromBody] UpdateProfileRequest model)
-        {
-            var userId = User.FindFirst("UserId")?.Value;
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized(new { Message = "User not authenticated." });
-            }
 
-            var response = await _authService.UpdateProfile(userId, model);
-            return response.ToApiResponse();
-        }
-
-        /// <summary>
-        /// Register a new admin user (SuperAdmin only)
-        /// </summary>
         [Authorize(Roles = RoleConstants.SuperAdmin)]
         [HttpPost("admin")]
         public async Task<ActionResult<ApiResponseDto<TokenResponseDto>>> RegisterAdmin([FromBody] RegisterModel model)

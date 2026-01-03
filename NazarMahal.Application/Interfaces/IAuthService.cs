@@ -12,12 +12,10 @@ namespace NazarMahal.Application.Interfaces
         public Task<ActionResponse<LoginResponseDto>> Login(LoginModel loginModel);
         public Task<ActionResponse<TokenResponseDto>> RegisterAdmin(RegisterModel registerAdminModel);
         public Task<ActionResponse<MessageResponseDto>> ForgotPassword(string email, IRequestContextAccessor requestContext);
-        public Task<ActionResponse<MessageResponseDto>> ResetPassword(Models.ResetPasswordRequest model);
-        public Task<ActionResponse<MessageResponseDto>> ChangePassword(string userId, Models.ChangePasswordRequest model);
+        public Task<ActionResponse<MessageResponseDto>> ResetPassword(ResetPasswordRequest model);
         public Task<ActionResponse<TokenResponseDto>> RefreshToken(string userId);
         public Task<ActionResponse<UserProfileResponseDto>> GetCurrentUser(string userId);
-        public Task<ActionResponse<UserProfileResponseDto>> UpdateProfile(string userId, Models.UpdateProfileRequest model);
-        public Task<ActionResponse<MessageResponseDto>> UpdateUserRole(string userId, Models.UpdateUserRoleRequest model);
+        public Task<ActionResponse<MessageResponseDto>> UpdateUserRole(string userId, UpdateUserRoleRequest model);
         public Task<ActionResponse<MessageResponseDto>> ActivateUser(string userId);
         public Task<ActionResponse<MessageResponseDto>> DeactivateUser(string userId);
         public Task<ActionResponse<IEnumerable<UserListResponseDto>>> GetAllUsers();

@@ -24,6 +24,14 @@ namespace NazarMahal.Infrastructure.Repository
             return result.Succeeded;
         }
 
+        public async Task<bool> VerifyCurrentPasswordAsync(int userId, string currentPassword)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null) return false;
+
+            return await _userManager.CheckPasswordAsync(user, currentPassword);
+        }
+
         public async Task<IEnumerable<UserResponseDto>> GetAllUsersAsync()
         {
             var users = _userManager.Users.ToList();

@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using NazarMahal.Application.RequestDto.UserRequestDto;
 using NazarMahal.Application.ResponseDto.UserResponseDto;
-using NazarMahal.Core.Abstractions;
 
 namespace NazarMahal.Application.Interfaces.IRepository
 {
@@ -12,6 +11,7 @@ namespace NazarMahal.Application.Interfaces.IRepository
         Task<bool> EnableUserStatusAsync(int userId);
         Task<bool> DisableUserStatusAsync(int userId);
         Task<bool> ChangePasswordAsync(int userId, ChangeUserPasswordRequestDto changeUserPasswordRequestDto);
+        Task<bool> VerifyCurrentPasswordAsync(int userId, string currentPassword);
         Task<UserResponseDto> AddUserAsync(CreateNewUserRequestDto createNewUserRequestDto);
         Task<UserResponseDto> UpdateUserInfoAsync(int userId, string fullname, string email, string address, bool isDisabled, IFormFile? profilePicture);
 
