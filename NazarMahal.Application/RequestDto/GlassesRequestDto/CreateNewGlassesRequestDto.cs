@@ -1,5 +1,5 @@
+using Microsoft.AspNetCore.Http;
 using System.ComponentModel.DataAnnotations;
-using NazarMahal.Core.Abstractions;
 
 namespace NazarMahal.Application.RequestDto.GlassesRequestDto
 {
@@ -31,6 +31,6 @@ namespace NazarMahal.Application.RequestDto.GlassesRequestDto
         [Required(ErrorMessage = "AvailableQuantity is required")]
         public int AvailableQuantity { get; set; }
         
-        public IList<IFile>? Attachments { get; set; }
+        public IList<IFormFile>? Attachments { get; set; }
     }
 }

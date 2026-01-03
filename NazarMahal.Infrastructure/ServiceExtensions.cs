@@ -68,8 +68,7 @@ public static class ServiceExtensions
         services.AddScoped<IAuthService, AuthService>();
 
         services.AddScoped<Core.Abstractions.IRequestContextAccessor, RequestContextAccessor>();
-        services.AddScoped<Core.Abstractions.IFileStorage>(_ =>
-            new FileStorage("wwwroot"));
+        services.AddScoped<IFileStorage, FileStorage>(sp => new FileStorage("wwwroot"));
 
         services.AddScoped<IDbConnection>(_ =>
         {

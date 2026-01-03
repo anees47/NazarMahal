@@ -1,12 +1,9 @@
 using Microsoft.AspNetCore.Http;
-using NazarMahal.Core.Abstractions;
-using System.IO;
+using NazarMahal.Application.Interfaces;
 
 namespace NazarMahal.Infrastructure.Services
 {
-    /// <summary>
-    /// Infrastructure implementation of IFileStorage that wraps ASP.NET Core's IFormFile
-    /// </summary>
+
     public class FileStorage : IFileStorage
     {
         private readonly string _basePath;
@@ -16,7 +13,7 @@ namespace NazarMahal.Infrastructure.Services
             _basePath = basePath;
         }
 
-        public async Task<string> SaveFileAsync(IFile file, string directory)
+        public async Task<string> SaveFileAsync(IFormFile file, string directory)
         {
             if (file == null)
                 throw new ArgumentNullException(nameof(file));
@@ -25,7 +22,6 @@ namespace NazarMahal.Infrastructure.Services
             var relativePath = Path.Combine(directory, fileName).Replace("\\", "/");
             var fullPath = Path.Combine(_basePath, relativePath);
 
-            // Ensure directory exists
             var directoryPath = Path.GetDirectoryName(fullPath);
             if (!Directory.Exists(directoryPath))
             {
@@ -42,7 +38,9 @@ namespace NazarMahal.Infrastructure.Services
 
         public Task DeleteFileAsync(string filePath)
         {
-            var fullPath = Path.Combine(_basePath, filePath);
+            if (string.IsNullOrEmpty(filePath)) return Task.CompletedTask;
+
+            var fullPath = Path.Combine(_basePath, filePath.Replace("/", Path.DirectorySeparatorChar.ToString()));
             if (File.Exists(fullPath))
             {
                 File.Delete(fullPath);
@@ -63,24 +61,6 @@ namespace NazarMahal.Infrastructure.Services
                 _ => "application/octet-stream"
             };
         }
-    }
-
-    /// <summary>
-    /// Adapter that wraps IFormFile to implement IFile
-    /// </summary>
-    public class FormFileAdapter : IFile
-    {
-        private readonly IFormFile _formFile;
-
-        public FormFileAdapter(IFormFile formFile)
-        {
-            _formFile = formFile ?? throw new ArgumentNullException(nameof(formFile));
-        }
-
-        public string FileName => _formFile.FileName;
-        public string ContentType => _formFile.ContentType;
-        public long Length => _formFile.Length;
-        public Stream OpenReadStream() => _formFile.OpenReadStream();
     }
 }
 

@@ -5,13 +5,15 @@ using NazarMahal.Infrastructure.Mappers;
 using NazarMahal.Application.Interfaces.IRepository;
 using NazarMahal.Application.RequestDto.UserRequestDto;
 using NazarMahal.Application.ResponseDto.UserResponseDto;
+using NazarMahal.Application.Interfaces;
 
 namespace NazarMahal.Infrastructure.Repository
 {
-    public class UserRepository(UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager) : IUserRepository
+    public class UserRepository(UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager, IFileStorage fileStorage) : IUserRepository
     {
         private readonly UserManager<ApplicationUser> _userManager = userManager;
         private readonly RoleManager<ApplicationRole> _roleManager = roleManager;
+        private readonly IFileStorage _fileStorage = fileStorage;
 
         public async Task<bool> ChangePasswordAsync(int userId, ChangeUserPasswordRequestDto changeUserPasswordRequestDto)
         {
@@ -89,21 +91,15 @@ namespace NazarMahal.Infrastructure.Repository
 
             if (profilePicture != null)
             {
-                var uploadsFolder = Path.Combine("wwwroot", "uploads", "profile-pictures");
-                if (!Directory.Exists(uploadsFolder))
+                // Validate content type
+                var fileContentTypeResult = NazarMahal.Application.Common.FileContentType.Create(profilePicture.ContentType);
+                if (!fileContentTypeResult.IsSuccessful || !fileContentTypeResult.Payload.IsImage())
                 {
-                    Directory.CreateDirectory(uploadsFolder);
+                    throw new InvalidOperationException("Invalid profile picture. Only image files are allowed.");
                 }
 
-                var fileName = $"{Guid.NewGuid()}_{profilePicture.FileName}";
-                var filePath = Path.Combine(uploadsFolder, fileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await profilePicture.CopyToAsync(stream);
-                }
-
-                user.ProfilePictureUrl = $"/uploads/profile-pictures/{fileName}";
+                var savedRelativePath = await _fileStorage.SaveFileAsync(profilePicture, Path.Combine("uploads", "profile-pictures"));
+                user.ProfilePictureUrl = savedRelativePath.StartsWith("/") ? savedRelativePath : "/" + savedRelativePath;
             }
 
             var result = await _userManager.UpdateAsync(user);

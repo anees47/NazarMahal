@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using NazarMahal.Application.Common;
 using NazarMahal.Application.DTOs.GlassesDto;
 using NazarMahal.Application.Interfaces;
@@ -11,10 +12,11 @@ using static NazarMahal.Core.ActionResponses.NothingActionResponse;
 
 namespace NazarMahal.Application.Services
 {
-    public class GlassesService(IGlassesRepository glassesRepository, IGlassesReadModelRepository glassesReadModelRepository) : IGlassesService
+    public class GlassesService(IGlassesRepository glassesRepository, IGlassesReadModelRepository glassesReadModelRepository, IFileStorage fileStorage) : IGlassesService
     {
         private readonly IGlassesRepository _glassesRepository = glassesRepository;
         private readonly IGlassesReadModelRepository _glassesReadModelRepository = glassesReadModelRepository;
+        private readonly IFileStorage _fileStorage = fileStorage;
 
         #region Glasses Category
 
@@ -325,9 +327,9 @@ namespace NazarMahal.Application.Services
             }
         }
 
-        public async Task<ActionResponse<IReadOnlyList<GlassesAttachment>>> AddGlassesAttachments(int glassesId, IEnumerable<Core.Abstractions.IFile> files)
+        public async Task<ActionResponse<IReadOnlyList<GlassesAttachment>>> AddGlassesAttachments(int glassesId, IList<IFormFile> files)
         {
-            var newImageList = new List<Tuple<GlassesAttachment, Core.Abstractions.IFile, string>>();
+            var newImageList = new List<GlassesAttachment>();
             try
             {
                 foreach (var file in files)
@@ -336,25 +338,28 @@ namespace NazarMahal.Application.Services
                     if (!fileContentTypeResult.IsSuccessful)
                         return ActionResponse<IReadOnlyList<GlassesAttachment>>.Fail(fileContentTypeResult.Messages);
 
-                    string fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
-                    var fullFileAbsolutePath = Path.Combine("uploads", fileName).Replace("\\", "/");
-                    var fullFileRelativePath = Path.Combine("\\uploads", fileName);
+                    var fileContentType = fileContentTypeResult.Payload.Value;
 
-                    var newImage = GlassesAttachment.Create(glassesId, fileName, fullFileRelativePath, fileContentTypeResult.Payload.Value);
+                    // Validate image
+                    if (!fileContentTypeResult.Payload.IsImage())
+                    {
+                        return ActionResponse<IReadOnlyList<GlassesAttachment>>.Fail("Only image attachments are allowed.");
+                    }
+
+                    // Save file using IFileStorage
+                    var savedRelativePath = await _fileStorage.SaveFileAsync(file, Path.Combine("uploads", "glasses"));
+
+                    var fileName = Path.GetFileName(savedRelativePath);
+
+                    var newImage = GlassesAttachment.Create(glassesId, fileName, savedRelativePath, fileContentType);
                     await _glassesRepository.AddGlassesAttachment(newImage);
 
-                    newImageList.Add(Tuple.Create(newImage, file, fullFileAbsolutePath));
+                    newImageList.Add(newImage);
                 }
 
-                foreach (var (attachment, file, path) in newImageList)
-                {
-                    using (var stream = new FileStream(path, FileMode.Create))
-                    {
-                        await file.OpenReadStream().CopyToAsync(stream);
-                    }
-                }
+                await _glassesRepository.CompletedAsync();
 
-                return ActionResponse<IReadOnlyList<GlassesAttachment>>.Ok(newImageList.Select(x => x.Item1).ToList());
+                return ActionResponse<IReadOnlyList<GlassesAttachment>>.Ok(newImageList);
             }
             catch (Exception ex)
             {
@@ -440,16 +445,19 @@ namespace NazarMahal.Application.Services
             {
                 if (deletedAttachmentIds == null) 
                     return ActionResponse<NothingResponseDto>.Ok(NothingResponseDto.Value);
-                
+
                 var glassesAttachmentByIds = await _glassesRepository.GetGlassesAttachmentsByIds(glassesId, deletedAttachmentIds);
                 _glassesRepository.DeleteGlassesAttachment(glassesAttachmentByIds);
 
                 foreach (var glassesAttachment in glassesAttachmentByIds)
                 {
-                    var attachmentToDeletePath = $"{glassesAttachment.StoragePath.Replace("/", "\\")}";
-                    File.Delete(attachmentToDeletePath);
+                    var path = glassesAttachment.StoragePath;
+                    // ensure path uses forward slashes as stored by FileStorage
+                    await _fileStorage.DeleteFileAsync(path);
                 }
-                
+
+                await _glassesRepository.CompletedAsync();
+
                 return ActionResponse<NothingResponseDto>.Ok(NothingResponseDto.Value);
             }
             catch (Exception ex)

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 using NazarMahal.Core.Abstractions;
 
 namespace NazarMahal.Application.RequestDto.GlassesRequestDto
@@ -21,7 +22,7 @@ namespace NazarMahal.Application.RequestDto.GlassesRequestDto
         public int SubCategoryId { get; set; }
         public bool IsActive { get; set; }
         public int AvailableQuantity { get; set; }
-        public IEnumerable<IFile>? Attachments { get; set; }
+        public IList<IFormFile>? Attachments { get; set; }
         public IEnumerable<int>? DeletedAttachmentIds { get; set; }
 
     }

@@ -48,7 +48,9 @@ namespace NazarMahal.Application.Common
                    string.Equals(Value, "image/pjpeg", StringComparison.OrdinalIgnoreCase) ||
                    string.Equals(Value, "image/x-png", StringComparison.OrdinalIgnoreCase) ||
                    string.Equals(Value, "image/gif", StringComparison.OrdinalIgnoreCase) ||
-                   string.Equals(Value, "image/png", StringComparison.OrdinalIgnoreCase);
+                   string.Equals(Value, "image/png", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(Value, "image/webp", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(Value, "image/svg+xml", StringComparison.OrdinalIgnoreCase);
         }
 
         public bool IsPdf()
