@@ -5,14 +5,8 @@ using NazarMahal.Core.Entities;
 
 namespace NazarMahal.Application.Mappers
 {
-    /// <summary>
-    /// Custom mapping extensions for Order-related DTOs
-    /// </summary>
     public static class OrderMappingExtensions
     {
-        /// <summary>
-        /// Map Order to OrderDto
-        /// </summary>
         public static OrderDto ToOrderDto(this Order order)
         {
             if (order == null) return null;

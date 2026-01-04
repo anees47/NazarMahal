@@ -18,9 +18,6 @@ namespace NazarMahal.API.Controllers
     {
         private readonly IOrderService _orderService = orderService;
 
-        /// <summary>
-        /// Create a new order
-        /// </summary>
         [HttpPost]
         public async Task<ActionResult<ApiResponseDto<OrderDto>>> CreateOrder([FromBody] CreateOrderRequestDto request)
         {
@@ -28,16 +25,8 @@ namespace NazarMahal.API.Controllers
             return response.ToApiResponse();
         }
 
-        /// <summary>
-        /// Get orders with optional filters
-        /// Query params:
-        /// - status: filter by order status (Open, Completed, Cancelled)
-        /// - userId: filter by user ID
-        /// </summary>
         [HttpGet]
-        public async Task<ActionResult<ApiResponseDto<IEnumerable<OrderResponseDto>>>> GetOrders(
-            [FromQuery] OrderStatus? status = null,
-            [FromQuery] int? userId = null)
+        public async Task<ActionResult<ApiResponseDto<IEnumerable<OrderResponseDto>>>> GetOrders([FromQuery] OrderStatus? status = null, [FromQuery] int? userId = null)
         {
             // Get orders by status
             if (status.HasValue)
@@ -45,7 +34,8 @@ namespace NazarMahal.API.Controllers
                 var response = status.Value switch
                 {
                     OrderStatus.New => await _orderService.GetOpenOrders(),
-                    OrderStatus.ReadyForPickup => await _orderService.GetOpenOrders(),
+                    OrderStatus.InProgress => await _orderService.GetInProgressOrder(),
+                    OrderStatus.ReadyForPickup => await _orderService.GetReadyForPickupOrders(),
                     OrderStatus.Completed => await _orderService.GetCompletedOrders(),
                     OrderStatus.Cancelled => await _orderService.GetCancelledOrders(),
                     _ => await _orderService.GetAllOrders()

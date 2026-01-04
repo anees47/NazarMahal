@@ -8,6 +8,8 @@ namespace NazarMahal.Application.Interfaces.IRepository
         Task<Order> AddOrder(Order order);
         Task<IEnumerable<Order>> RetrieveAllOrders();
         Task<IEnumerable<Order>> RetrieveOpenOrders();
+        Task<IEnumerable<Order>> RetrieveInProgressOrders();
+        Task<IEnumerable<Order>> RetrieveReadyForPickupOrders();
         Task<IEnumerable<Order>> RetrieveAllCompletedOrders();
         Task<IEnumerable<Order>> RetrieveAllCancelledOrders();
         Task<Order> GetOrderByOrderId(int orderId);

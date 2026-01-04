@@ -23,6 +23,21 @@ namespace NazarMahal.Core.Entities
             UnitPrice = unitPrice;
             TotalAmount = quantity * unitPrice;
         }
+
+        public static OrderItem Create(int glassesId, int quantity, decimal unitPrice)
+        {
+            if (quantity <= 0)
+            {
+                throw new ArgumentException("Quantity must be greater than zero", nameof(quantity));
+            }
+            if (unitPrice < 0)
+            {
+                throw new ArgumentException("Unit price cannot be negative", nameof(unitPrice));
+            }
+            return new OrderItem(glassesId, quantity, unitPrice);
+        }
+
+
     }
 }
 

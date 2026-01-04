@@ -204,9 +204,7 @@ namespace NazarMahal.API.Controllers
         [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.SuperAdmin}")]
         [HttpPut("{id}")]
         [Consumes("multipart/form-data")]
-        public async Task<ActionResult<ApiResponseDto<GlassesDto>>> UpdateGlasses(
-            int id,
-            [FromForm] UpdateGlassesRequestDto request)
+        public async Task<ActionResult<ApiResponseDto<GlassesDto>>> UpdateGlasses(int id, [FromForm] UpdateGlassesRequestDto request)
         {
             request.GlassesId = id;
             var response = await _glassesService.UpdateGlasses(request);

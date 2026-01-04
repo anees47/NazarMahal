@@ -35,7 +35,23 @@ namespace NazarMahal.Infrastructure.Repository
             return await _dbContext.Orders
                 .Include(o => o.OrderItems)
                     .ThenInclude(oi => oi.Glasses)
-                .Where(o => o.OrderStatus == OrderStatus.New || o.OrderStatus == OrderStatus.InProgress)
+                .Where(o => o.OrderStatus == OrderStatus.New)
+                .ToListAsync();
+        }
+        public async Task<IEnumerable<Order>> RetrieveInProgressOrders()
+        {
+            return await _dbContext.Orders
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Glasses)
+                .Where(o => o.OrderStatus == OrderStatus.ReadyForPickup)
+                .ToListAsync();
+        }
+        public async Task<IEnumerable<Order>> RetrieveReadyForPickupOrders()
+        {
+            return await _dbContext.Orders
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Glasses)
+                .Where(o => o.OrderStatus == OrderStatus.ReadyForPickup)
                 .ToListAsync();
         }
 

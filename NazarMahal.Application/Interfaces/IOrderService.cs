@@ -12,6 +12,8 @@ namespace NazarMahal.Application.Interfaces
         Task<ActionResponse<OrderDto>> CreateOrder(CreateOrderRequestDto orderRequest);
         Task<ActionResponse<IEnumerable<OrderResponseDto>>> GetAllOrders();
         Task<ActionResponse<IEnumerable<OrderResponseDto>>> GetOpenOrders();
+        Task<ActionResponse<IEnumerable<OrderResponseDto>>> GetInProgressOrder();
+        Task<ActionResponse<IEnumerable<OrderResponseDto>>> GetReadyForPickupOrders();
         Task<ActionResponse<IEnumerable<OrderResponseDto>>> GetCompletedOrders();
         Task<ActionResponse<IEnumerable<OrderResponseDto>>> GetCancelledOrders();
         Task<ActionResponse<OrderResponseDto>> GetOrderByOrderId(int orderId);

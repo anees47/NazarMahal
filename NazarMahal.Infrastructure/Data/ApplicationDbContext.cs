@@ -33,15 +33,11 @@ namespace NazarMahal.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new OrderEntityConfiguration());
             modelBuilder.ApplyConfiguration(new OrderItemEntityConfiguration());
 
-            // Global query filter for soft delete
             modelBuilder.Entity<Glasses>().HasQueryFilter(g => g.IsActive);
             modelBuilder.Entity<GlassesCategory>().HasQueryFilter(gc => gc.IsActive);
             modelBuilder.Entity<GlassesSubCategory>().HasQueryFilter(gsc => gsc.IsActive);
             
-            // Unique constraint on appointment date/time
-            modelBuilder.Entity<Appointment>()
-                .HasIndex(a => new { a.AppointmentDate, a.AppointmentTime })
-                .IsUnique();
+            modelBuilder.Entity<Appointment>().HasIndex(a => new { a.AppointmentDate, a.AppointmentTime }).IsUnique();
         }
     }
 }

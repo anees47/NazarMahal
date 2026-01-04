@@ -32,15 +32,11 @@ namespace NazarMahal.Application.Services
             try
             {
                 if (!ValidateOrderRequest(orderRequest, out var validationError))
-                {
                     return new FailActionResponse<OrderDto>(validationError);
-                }
 
                 var userExist = await _userRepository.GetUserByIdAsync(orderRequest.UserId);
                 if (userExist == null)
-                {
                     return new FailActionResponse<OrderDto>("User not found");
-                }
 
                 var orderItems = new List<OrderItem>();
                 decimal totalAmount = 0;
@@ -48,44 +44,29 @@ namespace NazarMahal.Application.Services
                 foreach (var item in orderRequest.OrderItems)
                 {
                     var glasses = await _glassesRepository.GetGlassesById(item.GlassesId);
-
                     if (glasses == null)
-                    {
                         return new FailActionResponse<OrderDto>($"Product with ID {item.GlassesId} not found");
-                    }
 
                     if (glasses.AvailableQuantity < item.Quantity)
-                    {
                         return new FailActionResponse<OrderDto>($"Insufficient inventory for {glasses.Name}. Only {glasses.AvailableQuantity} available.");
-                    }
 
                     glasses.AvailableQuantity -= item.Quantity;
                     await _glassesRepository.UpdateGlasses(glasses);
 
-                    var orderItem = item.ToOrderItem();
+                    var orderItem = OrderItem.Create(item.GlassesId, item.Quantity, glasses.Price);
                     orderItems.Add(orderItem);
+
                     totalAmount += orderItem.TotalAmount;
                 }
 
-                var order = new Order(
-                    orderRequest.UserId,
-                    totalAmount,
-                    orderRequest.PhoneNumber,
-                    orderRequest.UserEmail,
-                    GenerateOrderNumber(),
-                    orderRequest.FirstName,
-                    orderRequest.LastName,
-                    orderRequest.PaymentMethod
-                );
+                var order = new Order(orderRequest.UserId, totalAmount, orderRequest.PhoneNumber, orderRequest.UserEmail, GenerateOrderNumber(), orderRequest.FirstName, orderRequest.LastName, orderRequest.PaymentMethod);
 
                 var createdOrder = await _orderRepository.AddOrder(order);
 
                 foreach (var item in orderItems)
-                {
                     item.OrderId = createdOrder.OrderId;
-                }
 
-                createdOrder.OrderItems = orderItems.ToList();
+                createdOrder.OrderItems = orderItems;
                 await _orderRepository.CompleteAsync();
 
                 var orderDto = createdOrder.ToOrderDto();
@@ -93,14 +74,13 @@ namespace NazarMahal.Application.Services
                 try
                 {
                     if (!string.IsNullOrWhiteSpace(orderRequest.UserEmail))
-                    {
-                        await _notificationService.SendOrderConfirmationEmail(orderRequest.UserEmail, order.OrderNumber, order.TotalAmount);
-                    }
-                    await _notificationService.SendAdminNewOrderEmail(order.OrderNumber, order.TotalAmount, orderRequest.UserEmail, orderRequest.PhoneNumber);
+                        await _notificationService.SendOrderConfirmationEmail(orderRequest.UserEmail, createdOrder.OrderNumber, createdOrder.TotalAmount);
+
+                    await _notificationService.SendAdminNewOrderEmail(createdOrder.OrderNumber, createdOrder.TotalAmount, orderRequest.UserEmail, orderRequest.PhoneNumber);
                 }
                 catch (Exception emailEx)
                 {
-                    _logger.LogWarning(emailEx, "Failed to send one or more order notification emails for order {OrderNumber}", order.OrderNumber);
+                    _logger.LogWarning(emailEx, "Failed to send one or more order notification emails for order {OrderNumber}", createdOrder.OrderNumber);
                 }
 
                 return new OkActionResponse<OrderDto>(orderDto, "Order created successfully.");
@@ -111,6 +91,7 @@ namespace NazarMahal.Application.Services
                 return new FailActionResponse<OrderDto>("An error occurred while creating the order.");
             }
         }
+
 
         private bool ValidateOrderRequest(CreateOrderRequestDto request, out string error)
         {
@@ -151,29 +132,12 @@ namespace NazarMahal.Application.Services
                 return false;
             }
 
-            // Validate Pakistani phone number format
             if (!System.Text.RegularExpressions.Regex.IsMatch(request.PhoneNumber, @"^03\d{9}$"))
             {
                 error = "Phone number must be 11 digits.";
                 return false;
             }
 
-            return true;
-        }
-
-        private bool ValidateGlassesAvailability(Glasses glasses, int quantity, out string error)
-        {
-            error = null;
-            if (!glasses.IsActive)
-            {
-                error = "Order can't be placed for this glasses as it's inactive";
-                return false;
-            }
-            if (glasses.AvailableQuantity < quantity)
-            {
-                error = "Order can't be placed for this product as available quantity is less than the requested quantity";
-                return false;
-            }
             return true;
         }
 
@@ -201,6 +165,32 @@ namespace NazarMahal.Application.Services
             try
             {
                 var orders = await _orderRepository.RetrieveOpenOrders();
+                var orderDtos = orders.ToOrderResponseDtoList();
+                return new OkActionResponse<IEnumerable<OrderResponseDto>>(orderDtos);
+            }
+            catch (Exception)
+            {
+                return new FailActionResponse<IEnumerable<OrderResponseDto>>("An error occurred while retrieving open orders.");
+            }
+        }
+        public async Task<ActionResponse<IEnumerable<OrderResponseDto>>> GetInProgressOrder()
+        {
+            try
+            {
+                var orders = await _orderRepository.RetrieveInProgressOrders();
+                var orderDtos = orders.ToOrderResponseDtoList();
+                return new OkActionResponse<IEnumerable<OrderResponseDto>>(orderDtos);
+            }
+            catch (Exception)
+            {
+                return new FailActionResponse<IEnumerable<OrderResponseDto>>("An error occurred while retrieving open orders.");
+            }
+        }
+        public async Task<ActionResponse<IEnumerable<OrderResponseDto>>> GetReadyForPickupOrders()
+        {
+            try
+            {
+                var orders = await _orderRepository.RetrieveReadyForPickupOrders();
                 var orderDtos = orders.ToOrderResponseDtoList();
                 return new OkActionResponse<IEnumerable<OrderResponseDto>>(orderDtos);
             }

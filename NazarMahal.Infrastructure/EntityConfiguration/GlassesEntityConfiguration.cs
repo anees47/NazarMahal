@@ -25,7 +25,7 @@ namespace NazarMahal.Infrastructure.EntityConfiguration
 
             builder.Property(x => x.Price)
                 .HasColumnName("Price")
-                .HasColumnType("decimal(6,2)")
+                .HasColumnType("decimal(18,2)")
                 .IsRequired();
 
             builder.Property(x => x.Brand)

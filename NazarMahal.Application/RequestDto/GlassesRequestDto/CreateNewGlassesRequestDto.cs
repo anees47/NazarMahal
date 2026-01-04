@@ -11,7 +11,7 @@ namespace NazarMahal.Application.RequestDto.GlassesRequestDto
         public string? Description { get; set; }
         
         [Required(ErrorMessage = "Price is required")]
-        [Range(0.01, 100000, ErrorMessage = "Price must be between 0.01 and 100,000")]
+        [Range(100, 10000000, ErrorMessage = "Price must be between 100 and 1,000,000")]
         public decimal Price { get; set; }
         
         public string? Brand { get; set; }

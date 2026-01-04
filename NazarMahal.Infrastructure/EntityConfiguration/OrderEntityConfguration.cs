@@ -12,11 +12,8 @@ public class OrderEntityConfiguration : IEntityTypeConfiguration<Order>
 
         builder.HasKey(o => o.OrderId);
 
-        builder.Property(o => o.TotalAmount)
-            .HasColumnType("decimal(18,2)")
-            .IsRequired();
-
-        builder.Property(o => o.OrderStatus)
+        builder.Property(o => o.OrderNumber)
+            .HasMaxLength(50)
             .IsRequired();
 
         builder.Property(o => o.OrderCreatedDate)
@@ -25,21 +22,24 @@ public class OrderEntityConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(o => o.OrderCreatedTime)
             .IsRequired();
 
+        builder.Property(o => o.FirstName)
+           .HasMaxLength(100);
+
+        builder.Property(o => o.LastName)
+            .HasMaxLength(100);
+
+        builder.Property(o => o.TotalAmount)
+            .HasColumnType("decimal(18,2)")
+            .IsRequired();
+
         builder.Property(o => o.PhoneNumber)
             .HasMaxLength(20);
 
         builder.Property(o => o.UserEmail)
             .HasMaxLength(100);
 
-        builder.Property(o => o.OrderNumber)
-            .HasMaxLength(50)
+        builder.Property(o => o.OrderStatus)
             .IsRequired();
-
-        builder.Property(o => o.FirstName)
-            .HasMaxLength(100);
-
-        builder.Property(o => o.LastName)
-            .HasMaxLength(100);
 
         builder.Property(o => o.PaymentMethod)
             .HasMaxLength(50);
