@@ -1,3 +1,4 @@
+using NazarMahal.Application.DTOs.GlassesDto;
 using NazarMahal.Application.DTOs.OrderDto;
 using NazarMahal.Application.RequestDto.OrderRequestDto;
 using NazarMahal.Application.ResponseDto.OrderResponseDto;
@@ -68,7 +69,26 @@ namespace NazarMahal.Application.Mappers
                 GlassesId = orderItem.GlassesId,
                 Quantity = orderItem.Quantity,
                 UnitPrice = orderItem.UnitPrice,
-                TotalAmount = orderItem.TotalAmount
+                TotalAmount = orderItem.TotalAmount,
+                GlassesName = orderItem.Glasses?.Name,
+                GlassesDetails = orderItem.Glasses != null ? new GlassesDetailsDto
+                {
+                    GlassesId = orderItem.Glasses.Id,
+                    GlassesName = orderItem.Glasses.Name,
+                    Description = orderItem.Glasses.Description,
+                    Price = orderItem.Glasses.Price,
+                    Brand = orderItem.Glasses.Brand,
+                    Model = orderItem.Glasses.Model,
+                    FrameType = orderItem.Glasses.FrameType,
+                    LensType = orderItem.Glasses.LensType,
+                    Color = orderItem.Glasses.Color,
+                    Attachments =  orderItem.Glasses.Attachments?.Select(a => new GlassesAttachmentDto
+                    {
+                        Id = a.Id,
+                        FileName = a.FileName,
+                        StoragePath = a.StoragePath,
+                    }).ToList()
+                } : null
             };
         }
 

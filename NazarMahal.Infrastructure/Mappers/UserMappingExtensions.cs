@@ -99,7 +99,7 @@ namespace NazarMahal.Infrastructure.Mappers
             return new UpdateUserRequestDto
             {
                 UserId = user.Id,
-                Fullname = user.FullName,
+                FullName = user.FullName,
                 Email = user.Email,
                 Address = user.Address,
                 IsDisabled = user.IsDisabled

@@ -89,7 +89,7 @@ namespace NazarMahal.Application.Services
                 return new FailActionResponse<bool>($"Error occurred in UserService.");
             }
         }
-      
+
         public async Task<ActionResponse<bool>> UpdateUserStatusAsync(int userId)
         {
             try
@@ -153,26 +153,29 @@ namespace NazarMahal.Application.Services
                 return new FailActionResponse<UserResponseDto>("Request body cannot be null.");
 
             if (updateUserRequest.UserId <= 0)
-                return new FailActionResponse<UserResponseDto>("Invalid user ID. User ID must be greater than 0.");
+return new FailActionResponse<UserResponseDto>("Invalid user ID. User ID must be greater than 0.");
 
             try
             {
+                var fullname = updateUserRequest.FullName ?? string.Empty;
+
                 var result = await _userRepository.UpdateUserInfoAsync(
-                    updateUserRequest.UserId, 
-                    updateUserRequest.Fullname, 
-                    updateUserRequest.Email, 
-                    updateUserRequest.Address,
-                    updateUserRequest.IsDisabled, 
+                    updateUserRequest.UserId,
+                    fullname,
+                    updateUserRequest.Email ?? string.Empty,
+                    updateUserRequest.PhoneNumber,
+                    updateUserRequest.Address ?? string.Empty,
+                    updateUserRequest.IsDisabled,
                     updateUserRequest.ProfilePicture);
-                
-                if (result == null) 
+
+                if (result == null)
                     return new FailActionResponse<UserResponseDto>("An Error Occurred");
 
-                return new OkActionResponse<UserResponseDto>(result);
+                return new OkActionResponse<UserResponseDto>(result, "User profile updated successfully");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return new FailActionResponse<UserResponseDto>("An Error occurred in UserService.UpdateUserInfoByIdAsync");
+                return new FailActionResponse<UserResponseDto>($"An Error occurred in UserService.UpdateUserInfoByIdAsync: {ex.Message}");
             }
         }
     }

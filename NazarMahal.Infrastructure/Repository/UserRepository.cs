@@ -75,7 +75,7 @@ namespace NazarMahal.Infrastructure.Repository
             return result.Succeeded ? user.ToUserResponseDto() : null;
         }
 
-        public async Task<UserResponseDto> UpdateUserInfoAsync(int userId, string fullname, string email, string address, bool isDisabled, IFormFile? profilePicture)
+        public async Task<UserResponseDto> UpdateUserInfoAsync(int userId, string fullname, string email, string? phoneNumber, string address, bool isDisabled, IFormFile? profilePicture)
         {
             var user = await _userManager.FindByIdAsync(userId.ToString());
             if (user == null)
@@ -86,6 +86,10 @@ namespace NazarMahal.Infrastructure.Repository
             user.FullName = fullname;
             user.Email = email;
             user.UserName = email;
+            if (!string.IsNullOrEmpty(phoneNumber))
+            {
+                user.PhoneNumber = phoneNumber;
+            }
             user.Address = address;
             user.IsDisabled = isDisabled;
 

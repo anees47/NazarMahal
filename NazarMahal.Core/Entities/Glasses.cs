@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 
 namespace NazarMahal.Core.Entities
 {
@@ -21,6 +21,9 @@ namespace NazarMahal.Core.Entities
 
         [JsonIgnore]
         public ICollection<Order> Orders { get; set; } = new List<Order>();
+
+        [JsonIgnore]
+        public ICollection<GlassesAttachment> Attachments { get; set; } = new List<GlassesAttachment>();
 
         public Glasses()
         {
