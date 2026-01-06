@@ -114,7 +114,8 @@ namespace NazarMahal.Application.Services
 
                await _appointmentRepository.AddAppointmentAsync(appointment);
                
-                await _notificationService.SendAppointmentConfirmationEmail(appointment);
+                // Send "Appointment Scheduled" email (tells customer to wait for confirmation)
+                await _notificationService.SendAppointmentScheduledEmail(appointment);
 
                 var appointmentDto = appointment.ToAppointmentDto();
                 return ActionResponse<AppointmentDto>.Ok(appointmentDto, "Appointment booked successfully.");
@@ -163,17 +164,19 @@ namespace NazarMahal.Application.Services
                     return new NotFoundActionResponse<AppointmentDto>($"No appointment found with ID {appointmentCancelRequestDto.AppointmentId}");
                 }
 
+                var oldStatus = appointment.AppointmentStatus;
                 appointment.AppointmentStatus = appointmentCancelRequestDto.AppointmentStatus;
 
                 await _appointmentRepository.UpdateAppointment(appointment);
 
+                // Send appropriate email based on new status
                 if (appointmentCancelRequestDto.AppointmentStatus == AppointmentEnums.AppointmentStatus.Cancelled)
                 {
                     await _notificationService.SendAppointmentCancellationEmail(appointment);
                 }
                 else if (appointmentCancelRequestDto.AppointmentStatus == AppointmentEnums.AppointmentStatus.Confirmed)
                 {
-                    await _notificationService.SendAppointmentConfirmationEmail(appointment);
+                    await _notificationService.SendAppointmentConfirmedEmail(appointment);
                 }
                 else if (appointmentCancelRequestDto.AppointmentStatus == AppointmentEnums.AppointmentStatus.Completed)
                 {

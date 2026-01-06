@@ -98,11 +98,10 @@ namespace NazarMahal.Infrastructure.Repository
         #endregion
 
 
-        #region Glasses 
+        #region Glasses
         public async Task<Glasses> GetGlassesById(int glassesId)
         {
             return await _dbContext.Glasses
-                //.Where(g => g.Id == glassesId && g.IsActive)
                 .Where(g => g.Id == glassesId)
                 .FirstOrDefaultAsync();
         }
@@ -150,7 +149,7 @@ namespace NazarMahal.Infrastructure.Repository
             {
                 return false;
             }
-            
+
             // Soft delete: Set IsActive to false instead of removing from database
             entity.IsActive = false;
             _dbContext.Glasses.Update(entity);

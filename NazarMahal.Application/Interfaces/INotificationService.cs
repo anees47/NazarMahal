@@ -4,12 +4,14 @@ namespace NazarMahal.Application.Interfaces
 {
     public interface INotificationService
     {
-        // Appointment Emails
+        // Appointment Emails - Production Workflow
+        Task SendAppointmentScheduledEmail(Appointment appointment);       // When customer books (Status: Scheduled)
+        Task SendAppointmentConfirmedEmail(Appointment appointment);       // When admin confirms (Status: Confirmed)
+        Task SendAppointmentCompletionEmail(Appointment appointment);      // When admin marks complete (Status: Completed)
+        Task SendAppointmentCancellationEmail(Appointment appointment);    // When admin cancels (Status: Cancelled)
+        Task SendAppointmentUpdateConfirmationEmail(Appointment appointment); // When admin updates details
+        Task SendAppointmentReminderEmail(Appointment appointment);        // Reminder before appointment
         Task SendAppointmentConfirmationEmail(Appointment appointment);
-        Task SendAppointmentCancellationEmail(Appointment appointment);
-        Task SendAppointmentCompletionEmail(Appointment appointment);
-        Task SendAppointmentUpdateConfirmationEmail(Appointment appointment);
-        Task SendAppointmentReminderEmail(Appointment appointment);
 
         // Order Emails
         Task SendOrderConfirmationEmail(string userEmail, string orderNumber, decimal amount);
