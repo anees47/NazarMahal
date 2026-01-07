@@ -1,3 +1,6 @@
+using Azure.Core;
+using Azure.Extensions.AspNetCore.Configuration.Secrets;
+using Azure.Identity;
 using Microsoft.AspNetCore.HostFiltering;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
@@ -12,6 +15,32 @@ using System.Threading.RateLimiting;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var keyVaultUrl = builder.Configuration["KeyVault:Url"];
+if (!string.IsNullOrWhiteSpace(keyVaultUrl))
+{
+    try
+    {
+        var credential = new DefaultAzureCredential();
+
+        builder.Configuration.AddAzureKeyVault(
+            new Uri(keyVaultUrl),
+            credential,
+            new AzureKeyVaultConfigurationOptions
+            {
+                ReloadInterval = TimeSpan.FromMinutes(5) 
+            });
+
+        builder.Logging.AddConsole();
+        builder.Logging.AddFilter("Azure", Microsoft.Extensions.Logging.LogLevel.Warning);
+    }
+    catch (Exception ex)
+    {
+        builder.Logging.AddConsole();
+        var logger = LoggerFactory.Create(config => config.AddConsole()).CreateLogger("Program");
+        logger.LogWarning(ex, "Failed to connect to Azure Key Vault. Falling back to environment variables and appsettings. Key Vault URL: {KeyVaultUrl}", keyVaultUrl);
+    }
+}
 builder.WebHost.ConfigureKestrel(options =>
 {
     options.AllowSynchronousIO = true;

@@ -32,13 +32,20 @@ public class ConfigurationValidationMiddleware(RequestDelegate next, ILogger<Con
 
             if (missingSecrets.Any())
             {
-                logger.LogCritical("CRITICAL: Missing required configuration secrets: {Secrets}", string.Join(", ", missingSecrets));
+                var keyVaultUrl = configuration["KeyVault:Url"];
+                var errorMessage = string.IsNullOrWhiteSpace(keyVaultUrl)
+                    ? "Required configuration values are missing. Please check environment variables or Azure Key Vault."
+                    : $"Required configuration values are missing. Please check Azure Key Vault ({keyVaultUrl}) or environment variables.";
+                
+                logger.LogCritical("CRITICAL: Missing required configuration secrets: {Secrets}. KeyVault:Url: {KeyVaultUrl}", 
+                    string.Join(", ", missingSecrets), keyVaultUrl ?? "Not configured");
+                
                 context.Response.StatusCode = 500;
                 context.Response.ContentType = "application/json";
                 await context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(new
                 {
                     error = "Configuration error",
-                    message = "Required configuration values are missing. Please check environment variables."
+                    message = errorMessage
                 }));
                 return;
             }
