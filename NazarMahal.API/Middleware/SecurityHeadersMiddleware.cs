@@ -14,17 +14,26 @@ public class SecurityHeadersMiddleware(RequestDelegate next)
         // Content Security Policy (CSP) - Adjust based on your needs
         if (!context.Request.Path.StartsWithSegments("/swagger"))
         {
-            context.Response.Headers.Append("Content-Security-Policy",
-                "default-src 'self'; " +
+            var csp = "default-src 'self'; " +
                 "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
                 "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
                 "font-src 'self' https://fonts.gstatic.com; " +
                 "img-src 'self' data: https:; " +
-                "connect-src 'self' https://api.brevo.com; " +
-                "frame-ancestors 'none';");
+                "connect-src 'self' https://api.brevo.com";
+            
+            if (context.Request.Host.Host.Contains("localhost"))
+            {
+                csp += " http://localhost:4200 https://localhost:7282 http://localhost:5287";
+            }
+            else
+            {
+                csp += " https://nazarmahal.com https://api.nazarmahal.com";
+            }
+            
+            csp += "; frame-ancestors 'none';";
+            context.Response.Headers.Append("Content-Security-Policy", csp);
         }
 
-        // Remove server header (optional - hides server technology)
         context.Response.Headers.Remove("Server");
 
         await next(context);

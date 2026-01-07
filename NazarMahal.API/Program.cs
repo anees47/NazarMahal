@@ -27,13 +27,11 @@ builder.Services.Configure<HostFilteringOptions>(options =>
     }
     else
     {
-        // Restrict to specific domains in production
+        // Restrict to production domains only
         options.AllowedHosts.Clear();
         options.AllowedHosts.Add("nazarmahal.com");
         options.AllowedHosts.Add("www.nazarmahal.com");
         options.AllowedHosts.Add("api.nazarmahal.com");
-        options.AllowedHosts.Add("dev.nazarmahal.com");
-        options.AllowedHosts.Add("api-dev.nazarmahal.com");
     }
 });
 
@@ -67,13 +65,12 @@ builder.Services.AddCors(options =>
     }
     else
     {
-        // Production: Only allow specific domains
+        // Production: Only allow production domains
         options.AddPolicy("AllowSpecificOrigins", policy =>
         {
             policy.WithOrigins(
                     "https://nazarmahal.com",
-                    "https://www.nazarmahal.com",
-                    "https://dev.nazarmahal.com"
+                    "https://www.nazarmahal.com"
                 )
                 .WithMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .WithHeaders("Content-Type", "Authorization", "X-Requested-With")
