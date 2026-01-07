@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using NazarMahal.API.Extensions;
 using NazarMahal.Application.Common;
 using NazarMahal.Application.Interfaces;
@@ -19,6 +20,7 @@ namespace NazarMahal.API.Controllers
 
 
         [AllowAnonymous]
+        [EnableRateLimiting("AuthPolicy")]
         [HttpPost("register")]
         public async Task<ActionResult<ApiResponseDto<RegisterResponseDto>>> Register([FromBody] RegisterModel model, [FromServices] NazarMahal.Core.Abstractions.IRequestContextAccessor requestContext)
         {
@@ -28,6 +30,7 @@ namespace NazarMahal.API.Controllers
 
 
         [AllowAnonymous]
+        [EnableRateLimiting("AuthPolicy")]
         [HttpPost("login")]
         public async Task<ActionResult<ApiResponseDto<LoginResponseDto>>> Login([FromBody] LoginModel model)
         {
@@ -66,7 +69,11 @@ namespace NazarMahal.API.Controllers
         /// <summary>
         /// Request password reset (forgot password)
         /// </summary>
+        /// <summary>
+        /// Request password reset (forgot password)
+        /// </summary>
         [AllowAnonymous]
+        [EnableRateLimiting("AuthPolicy")]
         [HttpPost("forgot-password")]
         public async Task<ActionResult<ApiResponseDto<MessageResponseDto>>> ForgotPassword([FromForm] string email, [FromServices] NazarMahal.Core.Abstractions.IRequestContextAccessor requestContext)
         {
