@@ -41,8 +41,13 @@ public static class ServiceExtensions
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlServer(
                 configuration.GetConnectionString("DefaultConnection"),
-                sql => sql.EnableRetryOnFailure()
-            )
+                sql =>
+                {
+                    sql.EnableRetryOnFailure(
+                        maxRetryCount: 5,
+                        maxRetryDelay: TimeSpan.FromSeconds(10),
+                        errorNumbersToAdd: null);
+                })
         );
 
         services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
@@ -70,12 +75,12 @@ public static class ServiceExtensions
         services.AddScoped<Core.Abstractions.IRequestContextAccessor, RequestContextAccessor>();
         services.AddScoped<IFileStorage, FileStorage>(sp => new FileStorage("wwwroot"));
 
-        services.AddScoped<IDbConnection>(_ =>
+        // IDbConnection factory that uses the pooled connection from DbContext
+        // This ensures Dapper uses the same connection pool as EF Core
+        services.AddScoped<IDbConnection>(sp =>
         {
-            var connectionString = configuration.GetConnectionString("DefaultConnection")
-                ?? throw new InvalidOperationException("DefaultConnection is missing.");
-
-            return new SqlConnection(connectionString);
+            var dbContext = sp.GetRequiredService<ApplicationDbContext>();
+            return dbContext.Database.GetDbConnection();
         });
 
         services.AddAuthentication(options =>

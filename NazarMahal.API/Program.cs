@@ -5,8 +5,8 @@ using Microsoft.AspNetCore.HostFiltering;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using HealthChecks.SqlServer;
 using Microsoft.OpenApi.Models;
-using NazarMahal.API.HealthChecks;
 using NazarMahal.API.Middleware;
 using NazarMahal.Application;
 using NazarMahal.Infrastructure;
@@ -202,7 +202,11 @@ builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(optio
 
 builder.Services.AddHealthChecks()
     .AddCheck("self", () => HealthCheckResult.Healthy(), tags: new[] { "self" })
-    .AddCheck<DatabaseHealthCheck>("database", tags: new[] { "ready" });
+    .AddSqlServer(
+        connectionString: builder.Configuration.GetConnectionString("DefaultConnection") 
+            ?? throw new InvalidOperationException("DefaultConnection is missing."),
+        name: "database",
+        tags: new[] { "ready" });
 
 var app = builder.Build();
 

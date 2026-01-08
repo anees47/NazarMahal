@@ -1,12 +1,12 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace NazarMahal.Infrastructure.Migrations
+namespace NazarMahal.Infrastructure.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class IntialCreate : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -21,11 +21,16 @@ namespace NazarMahal.Infrastructure.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<int>(type: "int", nullable: false),
-                    Message = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FullName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ReasonForVisit = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    AdditionalNotes = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     AppointmentType = table.Column<int>(type: "int", nullable: false),
                     AppointmentDate = table.Column<DateOnly>(type: "date", nullable: false),
                     AppointmentTime = table.Column<TimeSpan>(type: "time", nullable: false),
-                    AppointmentStatus = table.Column<int>(type: "int", nullable: false)
+                    AppointmentStatus = table.Column<int>(type: "int", nullable: false),
+                    DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -56,7 +61,9 @@ namespace NazarMahal.Infrastructure.Migrations
                     FullName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Address = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ProfilePictureUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    UserType = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    UserType = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false),
                     IsDisabled = table.Column<bool>(type: "bit", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -66,7 +73,6 @@ namespace NazarMahal.Infrastructure.Migrations
                     PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     SecurityStamp = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ConcurrencyStamp = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     PhoneNumberConfirmed = table.Column<bool>(type: "bit", nullable: false),
                     TwoFactorEnabled = table.Column<bool>(type: "bit", nullable: false),
                     LockoutEnd = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
@@ -220,8 +226,7 @@ namespace NazarMahal.Infrastructure.Migrations
                         column: x => x.CategoryId,
                         principalSchema: "dbo",
                         principalTable: "GlassesCategory",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -233,7 +238,7 @@ namespace NazarMahal.Infrastructure.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "NVARCHAR(100)", nullable: false),
                     Description = table.Column<string>(type: "NVARCHAR(1000)", nullable: true),
-                    Price = table.Column<decimal>(type: "decimal(6,2)", nullable: false),
+                    Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     Brand = table.Column<string>(type: "NVARCHAR(100)", nullable: true),
                     Model = table.Column<string>(type: "NVARCHAR(100)", nullable: true),
                     FrameType = table.Column<string>(type: "NVARCHAR(100)", nullable: true),
@@ -272,14 +277,21 @@ namespace NazarMahal.Infrastructure.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     GlassesId = table.Column<int>(type: "INT", nullable: false),
-                    FileName = table.Column<string>(type: "NVARCHAR(100)", nullable: false),
-                    FileType = table.Column<string>(type: "NVARCHAR(10)", nullable: false),
-                    StoragePath = table.Column<string>(type: "NVARCHAR(500)", nullable: false)
+                    FileName = table.Column<string>(type: "NVARCHAR(100)", maxLength: 255, nullable: false),
+                    FileType = table.Column<string>(type: "NVARCHAR(10)", maxLength: 50, nullable: false),
+                    StoragePath = table.Column<string>(type: "NVARCHAR(500)", maxLength: 1000, nullable: false),
+                    GlassesId1 = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_GlassesAttachmentId", x => x.Id)
                         .Annotation("SqlServer:Clustered", true);
+                    table.ForeignKey(
+                        name: "FK_GlassesAttachment_Glasses_GlassesId1",
+                        column: x => x.GlassesId1,
+                        principalSchema: "dbo",
+                        principalTable: "Glasses",
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Glasses_Id",
                         column: x => x.GlassesId,
@@ -296,12 +308,17 @@ namespace NazarMahal.Infrastructure.Migrations
                     OrderId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<int>(type: "int", nullable: false),
-                    GlassesId = table.Column<int>(type: "int", nullable: false),
-                    Quantity = table.Column<int>(type: "int", nullable: false),
-                    Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    TotalAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     OrderStatus = table.Column<int>(type: "int", nullable: false),
                     OrderCreatedDate = table.Column<DateOnly>(type: "date", nullable: false),
-                    OrderCreatedTime = table.Column<TimeOnly>(type: "time", nullable: false)
+                    OrderCreatedTime = table.Column<TimeOnly>(type: "time", nullable: false),
+                    PhoneNumber = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    UserEmail = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    OrderNumber = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    FirstName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    LastName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    PaymentMethod = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    GlassesId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -311,15 +328,50 @@ namespace NazarMahal.Infrastructure.Migrations
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Orders_Glasses_GlassesId",
                         column: x => x.GlassesId,
                         principalSchema: "dbo",
                         principalTable: "Glasses",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OrderItems",
+                columns: table => new
+                {
+                    OrderItemId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    OrderId = table.Column<int>(type: "int", nullable: false),
+                    GlassesId = table.Column<int>(type: "int", nullable: false),
+                    Quantity = table.Column<int>(type: "int", nullable: false),
+                    UnitPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    TotalAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OrderItems", x => x.OrderItemId);
+                    table.ForeignKey(
+                        name: "FK_OrderItems_Glasses_GlassesId",
+                        column: x => x.GlassesId,
+                        principalSchema: "dbo",
+                        principalTable: "Glasses",
                         principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_OrderItems_Orders_OrderId",
+                        column: x => x.OrderId,
+                        principalTable: "Orders",
+                        principalColumn: "OrderId",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Appointments_AppointmentDate_AppointmentTime",
+                table: "Appointments",
+                columns: new[] { "AppointmentDate", "AppointmentTime" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
@@ -379,10 +431,26 @@ namespace NazarMahal.Infrastructure.Migrations
                 column: "GlassesId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_GlassesAttachment_GlassesId1",
+                schema: "dbo",
+                table: "GlassesAttachment",
+                column: "GlassesId1");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_GlassesSubCategory_CategoryId",
                 schema: "dbo",
                 table: "GlassesSubCategory",
                 column: "CategoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrderItems_GlassesId",
+                table: "OrderItems",
+                column: "GlassesId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrderItems_OrderId",
+                table: "OrderItems",
+                column: "OrderId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Orders_GlassesId",
@@ -421,10 +489,13 @@ namespace NazarMahal.Infrastructure.Migrations
                 schema: "dbo");
 
             migrationBuilder.DropTable(
-                name: "Orders");
+                name: "OrderItems");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
+                name: "Orders");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");

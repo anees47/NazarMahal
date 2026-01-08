@@ -9,11 +9,11 @@ using NazarMahal.Infrastructure.Data;
 
 #nullable disable
 
-namespace NazarMahal.Infrastructure.Migrations
+namespace NazarMahal.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260103212911_IncreaseGlassesPricePrecision")]
-    partial class IncreaseGlassesPricePrecision
+    [Migration("20260107045211_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -271,6 +271,9 @@ namespace NazarMahal.Infrastructure.Migrations
                         .HasColumnType("INT")
                         .HasColumnName("GlassesId");
 
+                    b.Property<int?>("GlassesId1")
+                        .HasColumnType("int");
+
                     b.Property<string>("StoragePath")
                         .IsRequired()
                         .HasMaxLength(1000)
@@ -283,6 +286,8 @@ namespace NazarMahal.Infrastructure.Migrations
                     SqlServerKeyBuilderExtensions.IsClustered(b.HasKey("Id"));
 
                     b.HasIndex("GlassesId");
+
+                    b.HasIndex("GlassesId1");
 
                     b.ToTable("GlassesAttachment", "dbo");
                 });
@@ -627,6 +632,10 @@ namespace NazarMahal.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("FK_Glasses_Id");
+
+                    b.HasOne("NazarMahal.Core.Entities.Glasses", null)
+                        .WithMany("Attachments")
+                        .HasForeignKey("GlassesId1");
                 });
 
             modelBuilder.Entity("NazarMahal.Core.Entities.GlassesSubCategory", b =>
@@ -675,6 +684,8 @@ namespace NazarMahal.Infrastructure.Migrations
 
             modelBuilder.Entity("NazarMahal.Core.Entities.Glasses", b =>
                 {
+                    b.Navigation("Attachments");
+
                     b.Navigation("Orders");
                 });
 

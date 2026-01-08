@@ -95,9 +95,8 @@ namespace NazarMahal.Infrastructure.ReadModelRepository
                 var result = await _dbConnection.QueryAsync<GlassesCategoryReadModel>(query, new { CategoryId = categoryId });
                 return result.FirstOrDefault();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Console.WriteLine($"Error in GetGlassesCategoryById: {ex.Message}");
                 return null;
             }
         }
@@ -165,9 +164,8 @@ namespace NazarMahal.Infrastructure.ReadModelRepository
 
                 return result.FirstOrDefault();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Console.WriteLine($"Error in GetGlassesSubcategoryById: {ex.Message}");
                 return null;
             }
         }
