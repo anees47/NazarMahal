@@ -4,8 +4,6 @@ using Azure.Identity;
 using Microsoft.AspNetCore.HostFiltering;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
-using HealthChecks.SqlServer;
 using Microsoft.OpenApi.Models;
 using NazarMahal.API.Middleware;
 using NazarMahal.Application;
@@ -200,14 +198,6 @@ builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(optio
 });
 
 
-builder.Services.AddHealthChecks()
-    .AddCheck("self", () => HealthCheckResult.Healthy(), tags: new[] { "self" })
-    .AddSqlServer(
-        connectionString: builder.Configuration.GetConnectionString("DefaultConnection") 
-            ?? throw new InvalidOperationException("DefaultConnection is missing."),
-        name: "database",
-        tags: new[] { "ready" });
-
 var app = builder.Build();
 
 // Configuration Validation
@@ -258,37 +248,6 @@ app.UseRateLimiter();
 // Authentication & Authorization
 app.UseAuthentication();
 app.UseAuthorization();
-
-// Health Checks
-app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
-{
-    ResponseWriter = async (context, report) =>
-    {
-        context.Response.ContentType = "application/json";
-        var result = System.Text.Json.JsonSerializer.Serialize(new
-        {
-            status = report.Status.ToString(),
-            checks = report.Entries.Select(e => new
-            {
-                name = e.Key,
-                status = e.Value.Status.ToString(),
-                exception = e.Value.Exception?.Message,
-                duration = e.Value.Duration.ToString()
-            })
-        });
-        await context.Response.WriteAsync(result);
-    }
-});
-
-app.MapHealthChecks("/health/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
-{
-    Predicate = check => check.Tags.Contains("ready")
-});
-
-app.MapHealthChecks("/health/live", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
-{
-    Predicate = _ => false
-});
 
 // Controllers
 app.MapControllers();
