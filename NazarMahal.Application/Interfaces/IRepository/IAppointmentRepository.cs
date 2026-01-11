@@ -1,6 +1,6 @@
+using NazarMahal.Application.RequestDto.AppointmentRequestDto;
 using NazarMahal.Core.Entities;
 using NazarMahal.Core.Enums;
-using NazarMahal.Application.RequestDto.AppointmentRequestDto;
 
 namespace NazarMahal.Application.Interfaces.IRepository
 {

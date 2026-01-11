@@ -1,44 +1,17 @@
-using Azure.Core;
-using Azure.Extensions.AspNetCore.Configuration.Secrets;
-using Azure.Identity;
 using Microsoft.AspNetCore.HostFiltering;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.OpenApi.Models;
 using NazarMahal.API.Middleware;
 using NazarMahal.Application;
 using NazarMahal.Infrastructure;
 using System.IO.Compression;
-using System.Threading.RateLimiting;
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var keyVaultUrl = builder.Configuration["KeyVault:Url"];
-if (!string.IsNullOrWhiteSpace(keyVaultUrl))
-{
-    try
-    {
-        var credential = new DefaultAzureCredential();
+builder.Logging.AddConsole();
 
-        builder.Configuration.AddAzureKeyVault(
-            new Uri(keyVaultUrl),
-            credential,
-            new AzureKeyVaultConfigurationOptions
-            {
-                ReloadInterval = TimeSpan.FromMinutes(5) 
-            });
-
-        builder.Logging.AddConsole();
-        builder.Logging.AddFilter("Azure", Microsoft.Extensions.Logging.LogLevel.Warning);
-    }
-    catch (Exception ex)
-    {
-        builder.Logging.AddConsole();
-        var logger = LoggerFactory.Create(config => config.AddConsole()).CreateLogger("Program");
-        logger.LogWarning(ex, "Failed to connect to Azure Key Vault. Falling back to environment variables and appsettings. Key Vault URL: {KeyVaultUrl}", keyVaultUrl);
-    }
-}
 builder.WebHost.ConfigureKestrel(options =>
 {
     options.AllowSynchronousIO = true;
@@ -81,7 +54,7 @@ builder.Services.AddCors(options =>
         // Development: Allow localhost
         options.AddPolicy("AllowSpecificOrigins", policy =>
         {
-            policy.WithOrigins(
+            _ = policy.WithOrigins(
                     "http://localhost:4200",
                     "https://localhost:4200"
                 )
@@ -95,7 +68,7 @@ builder.Services.AddCors(options =>
         // Production: Only allow production domains
         options.AddPolicy("AllowSpecificOrigins", policy =>
         {
-            policy.WithOrigins(
+            _ = policy.WithOrigins(
                     "https://nazarmahal.com",
                     "https://www.nazarmahal.com"
                 )
@@ -153,7 +126,7 @@ builder.Services.AddRateLimiter(options =>
             }));
 
     // Specific policy for authentication endpoints: 5 requests per minute
-    options.AddPolicy("AuthPolicy", httpContext =>
+    _ = options.AddPolicy("AuthPolicy", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
             factory: partition => new FixedWindowRateLimiterOptions
@@ -203,7 +176,7 @@ var app = builder.Build();
 // Configuration Validation
 if (!app.Environment.IsDevelopment())
 {
-    app.UseMiddleware<ConfigurationValidationMiddleware>();
+    _ = app.UseMiddleware<ConfigurationValidationMiddleware>();
 }
 
 // Global Exception Handler
@@ -215,8 +188,8 @@ app.UseMiddleware<SecurityHeadersMiddleware>();
 // Swagger
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    _ = app.UseSwagger();
+    _ = app.UseSwaggerUI();
 }
 
 // Host Filtering
@@ -225,12 +198,12 @@ app.UseHostFiltering();
 // HTTPS Redirection & HSTS (Production)
 if (!app.Environment.IsDevelopment())
 {
-    app.UseHsts(); // HTTP Strict Transport Security
-    app.UseHttpsRedirection();
+    _ = app.UseHsts(); // HTTP Strict Transport Security
+    _ = app.UseHttpsRedirection();
 }
 else
 {
-    app.UseHttpsRedirection();
+    _ = app.UseHttpsRedirection();
 }
 
 // Response Compression

@@ -8,33 +8,33 @@ namespace NazarMahal.Infrastructure.EntityConfiguration
     {
         public void Configure(EntityTypeBuilder<GlassesAttachment> builder)
         {
-            builder.ToTable("GlassesAttachment", "dbo");
+            _ = builder.ToTable("GlassesAttachment", "dbo");
 
-            builder.HasKey(x => x.Id)
+            _ = builder.HasKey(x => x.Id)
                 .HasName("PK_GlassesAttachmentId")
                 .IsClustered();
 
-            builder.Property(x => x.GlassesId)
+            _ = builder.Property(x => x.GlassesId)
                 .HasColumnName("GlassesId")
                 .HasColumnType("INT")
                 .IsRequired();
 
-            builder.Property(x => x.FileName)
+            _ = builder.Property(x => x.FileName)
                 .HasColumnName("FileName")
                 .HasColumnType("NVARCHAR(100)")
                 .IsRequired();
 
-            builder.Property(x => x.FileType)
+            _ = builder.Property(x => x.FileType)
                             .HasColumnName("FileType")
                             .HasColumnType("NVARCHAR(10)")
                             .IsRequired();
 
-            builder.Property(x => x.StoragePath)
+            _ = builder.Property(x => x.StoragePath)
                 .HasColumnName("StoragePath")
                 .HasColumnType("NVARCHAR(500)")
                 .IsRequired();
 
-            builder.HasOne<Glasses>().WithMany().HasForeignKey(x => x.GlassesId).HasConstraintName("FK_Glasses_Id").IsRequired();
+            _ = builder.HasOne<Glasses>().WithMany().HasForeignKey(x => x.GlassesId).HasConstraintName("FK_Glasses_Id").IsRequired();
 
         }
     }

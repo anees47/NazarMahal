@@ -1,25 +1,25 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace NazarMahal.Core.Entities
 {
     public class GlassesAttachment
     {
         public int Id { get; set; }
-        
+
         [Required]
         public int GlassesId { get; set; }
-        
+
         [Required]
         [MaxLength(255)]
-        public string FileName { get; set; }
-        
+        public string FileName { get; set; } = string.Empty;
+
         [Required]
         [MaxLength(50)]
-        public string FileType { get; set; }
-        
+        public string FileType { get; set; } = string.Empty;
+
         [Required]
         [MaxLength(1000)]
-        public string StoragePath { get; set; }
+        public string StoragePath { get; set; } = string.Empty;
 
         public GlassesAttachment() { }
 

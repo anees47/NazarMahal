@@ -3,14 +3,24 @@ namespace NazarMahal.Core.ActionResponses
     public abstract class ActionResponse
     {
         public bool IsSuccessful { get; protected set; }
-        public string StatusCode { get; protected set; }
-        public string Message
+        public string StatusCode { get; protected set; } = string.Empty;
+        public string? Message
         {
-            get => Messages == null || !Messages.Any() ? null : string.Join(",", Messages);
+            get
+            {
+                if (Messages == null || Messages.Count == 0)
+                {
+                    return null;
+                }
+                else
+                {
+                    return string.Join(",", Messages);
+                }
+            }
 
-            protected set => Messages = string.IsNullOrEmpty(value) ? null : new List<string> { value };
+            protected set => Messages = string.IsNullOrEmpty(value) ? null : [value];
         }
-        public List<string> Messages { get; protected set; }
+        public List<string> Messages { get; protected set; } = [];
 
         public static ActionResponse Combine(params ActionResponse[] actionResponses)
         {
@@ -37,7 +47,7 @@ namespace NazarMahal.Core.ActionResponses
 
     public abstract class ActionResponse<T> : ActionResponse
     {
-        public T Payload { get; protected set; }
+        public T Payload { get; protected set; } = default!;
 
         //Chain OnSuccess with different return type
         public ActionResponse<TResult> OnSuccess<TResult>(Func<T, ActionResponse<TResult>> action)
@@ -78,7 +88,7 @@ namespace NazarMahal.Core.ActionResponses
             return new OkActionResponse<T>(messages);
         }
 
-        public static ActionResponse<T> Ok(T payload, string message = null)
+        public static ActionResponse<T> Ok(T payload, string? message = null)
         {
             return new OkActionResponse<T>(payload, message);
         }
@@ -106,7 +116,7 @@ namespace NazarMahal.Core.ActionResponses
             return new FailActionResponse<T>(messages);
         }
 
-        public static ActionResponse<T> Fail(T payload, string message = null)
+        public static ActionResponse<T> Fail(T payload, string? message = null)
         {
             return new FailActionResponse<T>(payload, message);
         }
@@ -134,7 +144,7 @@ namespace NazarMahal.Core.ActionResponses
             return new NotFoundActionResponse<T>(messages);
         }
 
-        public static ActionResponse<T> NotFound(T payload, string message = null)
+        public static ActionResponse<T> NotFound(T payload, string? message = null)
         {
             return new NotFoundActionResponse<T>(payload, message);
         }
@@ -162,7 +172,7 @@ namespace NazarMahal.Core.ActionResponses
             return new AuthTokenExpiredActionResponse<T>(messages);
         }
 
-        public static ActionResponse<T> AuthTokenExpired(T payload, string message = null)
+        public static ActionResponse<T> AuthTokenExpired(T payload, string? message = null)
         {
             return new AuthTokenExpiredActionResponse<T>(payload, message);
         }

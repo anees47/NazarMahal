@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using NazarMahal.Infrastructure.Data;
-using NazarMahal.Core.Entities;
-using NazarMahal.Core.Enums;
 using NazarMahal.Application.Interfaces.IRepository;
 using NazarMahal.Application.RequestDto.AppointmentRequestDto;
+using NazarMahal.Core.Entities;
+using NazarMahal.Core.Enums;
+using NazarMahal.Infrastructure.Data;
 using static NazarMahal.Core.Enums.AppointmentEnums;
 
 namespace NazarMahal.Infrastructure.Repository
@@ -24,8 +24,8 @@ namespace NazarMahal.Infrastructure.Repository
             if (appointment != null)
             {
                 appointment.AppointmentStatus = AppointmentStatus.Cancelled;
-                _dbContext.Update(appointment);
-                await _dbContext.SaveChangesAsync();
+                _ = _dbContext.Update(appointment);
+                _ = await _dbContext.SaveChangesAsync();
             }
 
             return appointment;
@@ -50,8 +50,8 @@ namespace NazarMahal.Infrastructure.Repository
                 appointment.ReasonForVisit = appointmentUpdateRequestDto.ReasonForVisit;
 
 
-                _dbContext.Appointments.Update(appointment);
-                await _dbContext.SaveChangesAsync();
+                _ = _dbContext.Appointments.Update(appointment);
+                _ = await _dbContext.SaveChangesAsync();
             }
 
             return appointment;
@@ -99,7 +99,7 @@ namespace NazarMahal.Infrastructure.Repository
         {
             var startDate = DateOnly.FromDateTime(DateTime.Today);
             var endDate = DateOnly.FromDateTime(DateTime.Today.AddDays(days));
-            
+
             return await _dbContext.Appointments
                 .Where(a => a.AppointmentDate >= startDate && a.AppointmentDate <= endDate)
                 .OrderBy(a => a.AppointmentDate)
@@ -107,11 +107,11 @@ namespace NazarMahal.Infrastructure.Repository
                 .ToListAsync();
         }
 
-        public async Task<Appointment> CompleteAppointment(int appointmentId, string completionNotes = null)
+        public async Task<Appointment> CompleteAppointment(int appointmentId, string? completionNotes = null)
         {
             var appointment = await _dbContext.Appointments
                 .FirstOrDefaultAsync(a => a.Id == appointmentId);
-            
+
             if (appointment != null)
             {
                 appointment.AppointmentStatus = AppointmentStatus.Completed;
@@ -119,9 +119,9 @@ namespace NazarMahal.Infrastructure.Repository
                 {
                     appointment.AdditionalNotes = completionNotes;
                 }
-                
-                _dbContext.Appointments.Update(appointment);
-                await _dbContext.SaveChangesAsync();
+
+                _ = _dbContext.Appointments.Update(appointment);
+                _ = await _dbContext.SaveChangesAsync();
             }
 
             return appointment;
@@ -130,17 +130,17 @@ namespace NazarMahal.Infrastructure.Repository
         public async Task<List<Appointment>> SearchAppointmentsByFullName(string fullName, DateOnly? date = null)
         {
             var query = _dbContext.Appointments.AsQueryable();
-            
+
             if (!string.IsNullOrEmpty(fullName))
             {
                 query = query.Where(a => a.FullName.Contains(fullName));
             }
-            
+
             if (date.HasValue)
             {
                 query = query.Where(a => a.AppointmentDate == date.Value);
             }
-            
+
             return await query
                 .OrderBy(a => a.AppointmentDate)
                 .ThenBy(a => a.AppointmentTime)
@@ -156,8 +156,8 @@ namespace NazarMahal.Infrastructure.Repository
 
         public async Task<Appointment> AddAppointmentAsync(Appointment appointment)
         {
-            _dbContext.Appointments.Add(appointment);
-            await _dbContext.SaveChangesAsync();
+            _ = _dbContext.Appointments.Add(appointment);
+            _ = await _dbContext.SaveChangesAsync();
             return appointment;
         }
 
@@ -171,8 +171,8 @@ namespace NazarMahal.Infrastructure.Repository
 
         public async Task<Appointment> UpdateAppointment(Appointment appointment)
         {
-            _dbContext.Appointments.Update(appointment);
-            await _dbContext.SaveChangesAsync();
+            _ = _dbContext.Appointments.Update(appointment);
+            _ = await _dbContext.SaveChangesAsync();
             return appointment;
         }
     }

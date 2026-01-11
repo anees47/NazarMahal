@@ -2,7 +2,7 @@ namespace NazarMahal.Application.Models
 {
     public class UpdateUserRoleRequest
     {
-        public string NewRole { get; set; }
+        public required string NewRole { get; set; }
     }
 }
 

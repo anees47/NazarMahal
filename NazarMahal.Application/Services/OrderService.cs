@@ -69,7 +69,7 @@ namespace NazarMahal.Application.Services
                 createdOrder.OrderItems = orderItems;
                 await _orderRepository.CompleteAsync();
 
-                var orderDto = createdOrder.ToOrderDto();
+                var orderDto = createdOrder.ToOrderDto() ?? throw new InvalidOperationException("Failed to map order to DTO");
 
                 try
                 {
@@ -280,7 +280,7 @@ namespace NazarMahal.Application.Services
                 {
                     return new FailActionResponse<OrderResponseDto>("Order not found.");
                 }
-                if (order.OrderStatus == newStatus) 
+                if (order.OrderStatus == newStatus)
                     return new FailActionResponse<OrderResponseDto>("New status is same as current status.");
 
                 order.OrderStatus = newStatus;

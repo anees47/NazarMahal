@@ -20,7 +20,7 @@ public class SecurityHeadersMiddleware(RequestDelegate next)
                 "font-src 'self' https://fonts.gstatic.com; " +
                 "img-src 'self' data: https:; " +
                 "connect-src 'self' https://api.brevo.com";
-            
+
             if (context.Request.Host.Host.Contains("localhost"))
             {
                 csp += " http://localhost:4200 https://localhost:7282 http://localhost:5287";
@@ -29,12 +29,12 @@ public class SecurityHeadersMiddleware(RequestDelegate next)
             {
                 csp += " https://nazarmahal.com https://api.nazarmahal.com";
             }
-            
+
             csp += "; frame-ancestors 'none';";
             context.Response.Headers.Append("Content-Security-Policy", csp);
         }
 
-        context.Response.Headers.Remove("Server");
+        _ = context.Response.Headers.Remove("Server");
 
         await next(context);
     }

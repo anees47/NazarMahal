@@ -1,6 +1,6 @@
+using NazarMahal.Core.ActionResponses;
 using System.Net;
 using System.Text.Json;
-using NazarMahal.Core.ActionResponses;
 
 namespace NazarMahal.API.Middleware;
 

@@ -8,10 +8,10 @@ namespace NazarMahal.Application
     {
         public static IServiceCollection AddApplication(this IServiceCollection services)
         {
-            services.AddScoped<IGlassesService, GlassesService>();
-            services.AddScoped<IAppointmentService, AppointmentService>();
-            services.AddScoped<IUserService, UserService>();
-            services.AddScoped<IOrderService, OrderService>();
+            _ = services.AddScoped<IGlassesService, GlassesService>();
+            _ = services.AddScoped<IAppointmentService, AppointmentService>();
+            _ = services.AddScoped<IUserService, UserService>();
+            _ = services.AddScoped<IOrderService, OrderService>();
 
             return services;
         }

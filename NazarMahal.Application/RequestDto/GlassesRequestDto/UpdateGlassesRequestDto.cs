@@ -1,18 +1,17 @@
-using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http;
-using NazarMahal.Core.Abstractions;
+using System.ComponentModel.DataAnnotations;
 
 namespace NazarMahal.Application.RequestDto.GlassesRequestDto
 {
     public class UpdateGlassesRequestDto
     {
         public int GlassesId { get; set; }
-        public string Name { get; set; }
+        public required string Name { get; set; }
         public string? Description { get; set; }
-        
+
         [Range(0.01, 100000, ErrorMessage = "Price must be between 0.01 and 100,000")]
         public decimal Price { get; set; }
-        
+
         public string? Brand { get; set; }
         public string? Model { get; set; }
         public string? FrameType { get; set; }

@@ -7,20 +7,20 @@ namespace NazarMahal.Core.ActionResponses
 
         public NotFoundActionResponse()
         {
-            SetDefault(default);
+            SetDefault(default!);
         }
 
-        public NotFoundActionResponse(string message) : this(default, message)
+        public NotFoundActionResponse(string message) : this(default!, message)
         {
 
         }
 
-        public NotFoundActionResponse(List<string> messages) : this(default, messages)
+        public NotFoundActionResponse(List<string> messages) : this(default!, messages)
         {
 
         }
 
-        public NotFoundActionResponse(T payload, string message = null)
+        public NotFoundActionResponse(T payload, string? message = null)
         {
             Message = message;
             SetDefault(payload);

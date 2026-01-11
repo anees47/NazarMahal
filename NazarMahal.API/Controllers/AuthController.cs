@@ -107,7 +107,7 @@ namespace NazarMahal.API.Controllers
             return response.ToApiResponse();
         }
 
-       
+
 
         [HttpGet("GetCurrentUser")]
         public async Task<ActionResult<ApiResponseDto<UserProfileResponseDto>>> GetCurrentUser()

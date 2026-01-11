@@ -6,12 +6,12 @@ namespace NazarMahal.Application.DTOs.AppointmentDto
     {
         public int Id { get; set; }
         public int UserId { get; set; }
-        public string FullName { get; set; }
-        public string Email { get; set; }
-        public string PhoneNumber { get; set; }
-        public string ReasonForVisit { get; set; }
+        public required string FullName { get; set; }
+        public required string Email { get; set; }
+        public required string PhoneNumber { get; set; }
+        public required string ReasonForVisit { get; set; }
         public string? AdditionalNotes { get; set; }
-        public AppointmentType AppointmentType { get; set; }
+        public required AppointmentType AppointmentType { get; set; }
         public DateOnly AppointmentDate { get; set; }
         public TimeSpan AppointmentTime { get; set; }
         public AppointmentStatus AppointmentStatus { get; set; }

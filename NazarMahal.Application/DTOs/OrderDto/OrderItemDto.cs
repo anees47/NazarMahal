@@ -10,7 +10,7 @@ namespace NazarMahal.Application.DTOs.OrderDto
         public decimal UnitPrice { get; set; }
         public decimal TotalAmount { get; set; }
         public string? GlassesName { get; set; }
-        
+
         // Full glasses details
         public GlassesDetailsDto? GlassesDetails { get; set; }
     }

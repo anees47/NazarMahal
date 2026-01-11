@@ -13,22 +13,13 @@ using NazarMahal.Infrastructure.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace NazarMahal.Infrastructure.Services
 {
-    public class AuthService(
-        UserManager<ApplicationUser> userManager,
-        RoleManager<ApplicationRole> roleManager,
-        IConfiguration configuration,
-        IEmailService emailService,
+    public class AuthService(UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager, IConfiguration configuration,
         INotificationService notificationService) : IAuthService
     {
-        private readonly UserManager<ApplicationUser> _userManager = userManager;
-        private readonly RoleManager<ApplicationRole> _roleManager = roleManager;
-        private readonly IConfiguration _configuration = configuration;
-        private readonly IEmailService _emailService = emailService;
-        private readonly INotificationService _notificationService = notificationService;
-
         public async Task<ActionResponse<RegisterResponseDto>> Register(RegisterModel model, IRequestContextAccessor requestContext)
         {
             try
@@ -43,7 +34,7 @@ namespace NazarMahal.Infrastructure.Services
                 if (string.IsNullOrEmpty(model.PhoneNumber) || !System.Text.RegularExpressions.Regex.IsMatch(model.PhoneNumber, @"^03\d{9}$"))
                     return new FailActionResponse<RegisterResponseDto>("Phone number must be 11 digits.");
 
-                var existingUser = await _userManager.FindByEmailAsync(model.Email);
+                var existingUser = await userManager.FindByEmailAsync(model.Email);
                 if (existingUser != null)
                     return new FailActionResponse<RegisterResponseDto>("Email already in use.");
 
@@ -57,17 +48,17 @@ namespace NazarMahal.Infrastructure.Services
                     DateCreated = PakistanTimeHelper.Now
                 };
 
-                var result = await _userManager.CreateAsync(user, model.Password);
+                var result = await userManager.CreateAsync(user, model.Password);
                 if (!result.Succeeded)
                     return new FailActionResponse<RegisterResponseDto>(result.Errors.Select(e => e.Description).ToList());
 
-                if (!await _roleManager.RoleExistsAsync(RoleConstants.Customer))
+                if (!await roleManager.RoleExistsAsync(RoleConstants.Customer))
                 {
                     var customerRole = new ApplicationRole { Name = RoleConstants.Customer };
-                    await _roleManager.CreateAsync(customerRole);
+                    _ = await roleManager.CreateAsync(customerRole);
                 }
 
-                await _userManager.AddToRoleAsync(user, RoleConstants.Customer);
+                _ = await userManager.AddToRoleAsync(user, RoleConstants.Customer);
                 var claims = new List<Claim>
                 {
                     new Claim(ClaimTypes.Name, user.FullName),
@@ -79,19 +70,19 @@ namespace NazarMahal.Infrastructure.Services
 
                 foreach (var claim in claims)
                 {
-                    await _userManager.AddClaimAsync(user, claim);
+                    _ = await userManager.AddClaimAsync(user, claim);
                 }
 
-                await _userManager.GetClaimsAsync(user);
+                _ = await userManager.GetClaimsAsync(user);
 
-                var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
                 var confirmationLink = requestContext.BuildUrl($"api/auth/ConfirmEmail?userId={user.Id}&token={Uri.EscapeDataString(token)}");
 
                 if (confirmationLink == null)
                 {
                     return new FailActionResponse<RegisterResponseDto>("Confirmation link is invalid");
                 }
-                await _notificationService.SendAccountConfirmationEmail(new List<string> { user.Email }, confirmationLink);
+                await notificationService.SendAccountConfirmationEmail([user.Email], confirmationLink);
 
                 return new OkActionResponse<RegisterResponseDto>(
                     new RegisterResponseDto { Message = "User registered successfully. Please check your email to confirm your account." });
@@ -109,11 +100,11 @@ namespace NazarMahal.Infrastructure.Services
                 if (model == null)
                     return new FailActionResponse<LoginResponseDto>("Invalid data.");
 
-                var user = await _userManager.FindByEmailAsync(model.Email);
-                if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password))
+                var user = await userManager.FindByEmailAsync(model.Email);
+                if (user == null || !await userManager.CheckPasswordAsync(user, model.Password))
                     return new FailActionResponse<LoginResponseDto>("Invalid credentials.");
 
-                var userClaims = await _userManager.GetClaimsAsync(user);
+                var userClaims = await userManager.GetClaimsAsync(user);
                 var userType = user.UserType;
                 var isEmailConfirmed = user.EmailConfirmed;
                 if (userType == RoleConstants.Customer || string.IsNullOrEmpty(userType))
@@ -169,7 +160,7 @@ namespace NazarMahal.Infrastructure.Services
                 if (string.IsNullOrEmpty(model.PhoneNumber) || !System.Text.RegularExpressions.Regex.IsMatch(model.PhoneNumber, @"^03\d{9}$"))
                     return new FailActionResponse<TokenResponseDto>("Phone number must be 11 digits.");
 
-                var existingUser = await _userManager.FindByEmailAsync(model.Email);
+                var existingUser = await userManager.FindByEmailAsync(model.Email);
                 if (existingUser != null)
                     return new FailActionResponse<TokenResponseDto>("Email already in use.");
 
@@ -183,17 +174,17 @@ namespace NazarMahal.Infrastructure.Services
                     DateCreated = PakistanTimeHelper.Now
                 };
 
-                var result = await _userManager.CreateAsync(adminUser, model.Password);
+                var result = await userManager.CreateAsync(adminUser, model.Password);
                 if (!result.Succeeded)
                     return new FailActionResponse<TokenResponseDto>(result.Errors.Select(e => e.Description).ToList());
 
-                if (!await _roleManager.RoleExistsAsync(RoleConstants.Admin))
+                if (!await roleManager.RoleExistsAsync(RoleConstants.Admin))
                 {
                     var adminRole = new ApplicationRole { Name = RoleConstants.Admin };
-                    await _roleManager.CreateAsync(adminRole);
+                    _ = await roleManager.CreateAsync(adminRole);
                 }
 
-                await _userManager.AddToRoleAsync(adminUser, RoleConstants.Admin);
+                _ = await userManager.AddToRoleAsync(adminUser, RoleConstants.Admin);
 
                 var claims = new List<Claim>
                 {
@@ -206,10 +197,10 @@ namespace NazarMahal.Infrastructure.Services
 
                 foreach (var claim in claims)
                 {
-                    await _userManager.AddClaimAsync(adminUser, claim);
+                    _ = await userManager.AddClaimAsync(adminUser, claim);
                 }
 
-                var userClaims = await _userManager.GetClaimsAsync(adminUser);
+                var userClaims = await userManager.GetClaimsAsync(adminUser);
 
                 var token = GenerateJwtToken(adminUser, userClaims);
 
@@ -235,14 +226,14 @@ namespace NazarMahal.Infrastructure.Services
 
             claims.AddRange(userClaims);
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key not configured")));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key not configured")));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Issuer"],
-                audience: _configuration["Jwt:Audience"],
+                issuer: configuration["Jwt:Issuer"],
+                audience: configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(int.Parse(_configuration["Jwt:DurationInMinutes"] ?? "60")),
+                expires: DateTime.UtcNow.AddMinutes(int.Parse(configuration["Jwt:DurationInMinutes"] ?? "60")),
                 signingCredentials: credentials
             );
 
@@ -258,34 +249,28 @@ namespace NazarMahal.Infrastructure.Services
                     return new FailActionResponse<MessageResponseDto>("Email is required.");
                 }
 
-                var normalizedEmail = _userManager.NormalizeEmail(email);
-                var user = await _userManager.FindByEmailAsync(normalizedEmail);
+                var normalizedEmail = userManager.NormalizeEmail(email);
+                var user = await userManager.FindByEmailAsync(normalizedEmail);
 
-                // Always return success message to prevent email enumeration attacks
                 if (user == null)
                 {
                     return new OkActionResponse<MessageResponseDto>(
                         new MessageResponseDto { Message = "If an account with the provided email exists, a password reset link will be sent." });
                 }
 
-                if (!await _userManager.IsEmailConfirmedAsync(user))
+                if (!await userManager.IsEmailConfirmedAsync(user))
                 {
-                    // Still send email, but don't reveal that email is not confirmed
                     return new OkActionResponse<MessageResponseDto>(
                         new MessageResponseDto { Message = "If an account with the provided email exists, a password reset link will be sent." });
                 }
 
-                // Generate password reset token (expires in 10 minutes as configured)
-                var passwordResetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+                var passwordResetToken = await userManager.GeneratePasswordResetTokenAsync(user);
 
-                // Get environment-specific frontend URL from configuration or use a default
-                var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:4200";
+                var frontendUrl = configuration["FrontendUrl"] ?? "http://localhost:4200";
 
-                // Create frontend reset URL
                 var resetUrl = $"{frontendUrl}/reset-password?userId={user.Id}&token={Uri.EscapeDataString(passwordResetToken)}";
 
-                // Send password reset email using NotificationService
-                await _notificationService.SendPasswordResetEmail(user.Email ?? throw new InvalidOperationException("User email is null"), resetUrl, user.FullName ?? "User");
+                await notificationService.SendPasswordResetEmail(user.Email ?? throw new InvalidOperationException("User email is null"), resetUrl, user.FullName ?? "User");
 
                 return new OkActionResponse<MessageResponseDto>(
                     new MessageResponseDto { Message = "If an account with the provided email exists, a password reset link will be sent to your email address. The link will expire in 10 minutes." });
@@ -309,11 +294,11 @@ namespace NazarMahal.Infrastructure.Services
                 if (string.IsNullOrEmpty(model.UserId) || string.IsNullOrEmpty(model.Token))
                     return new FailActionResponse<MessageResponseDto>("Invalid token or userId.");
 
-                var user = await _userManager.FindByIdAsync(model.UserId);
+                var user = await userManager.FindByIdAsync(model.UserId);
                 if (user == null)
                     return new NotFoundActionResponse<MessageResponseDto>("User not found.");
 
-                var result = await _userManager.ResetPasswordAsync(user, model.Token, model.NewPassword);
+                var result = await userManager.ResetPasswordAsync(user, model.Token, model.NewPassword);
                 if (!result.Succeeded)
                     return new FailActionResponse<MessageResponseDto>(result.Errors.Select(e => e.Description).ToList());
 
@@ -330,14 +315,14 @@ namespace NazarMahal.Infrastructure.Services
         {
             try
             {
-                var user = await _userManager.FindByIdAsync(userId);
+                var user = await userManager.FindByIdAsync(userId);
                 if (user == null)
                     return new NotFoundActionResponse<TokenResponseDto>("User not found.");
 
                 if (user.IsDisabled)
                     return new FailActionResponse<TokenResponseDto>("User account is disabled.");
 
-                var userClaims = await _userManager.GetClaimsAsync(user);
+                var userClaims = await userManager.GetClaimsAsync(user);
                 var token = GenerateJwtToken(user, userClaims);
 
                 return new OkActionResponse<TokenResponseDto>(
@@ -357,11 +342,11 @@ namespace NazarMahal.Infrastructure.Services
         {
             try
             {
-                var user = await _userManager.FindByIdAsync(userId);
+                var user = await userManager.FindByIdAsync(userId);
                 if (user == null)
                     return new NotFoundActionResponse<UserProfileResponseDto>("User not found.");
 
-                var roles = await _userManager.GetRolesAsync(user);
+                var roles = await userManager.GetRolesAsync(user);
 
                 var userProfile = new UserProfileResponseDto
                 {
@@ -392,22 +377,22 @@ namespace NazarMahal.Infrastructure.Services
                 if (model == null)
                     return new FailActionResponse<UserProfileResponseDto>("Invalid data.");
 
-                var user = await _userManager.FindByIdAsync(userId);
+                var user = await userManager.FindByIdAsync(userId);
                 if (user == null)
                     return new NotFoundActionResponse<UserProfileResponseDto>("User not found.");
 
                 // Validate Pakistani phone number format if provided
-                if (!string.IsNullOrEmpty(model.PhoneNumber) && !System.Text.RegularExpressions.Regex.IsMatch(model.PhoneNumber, @"^03\d{9}$"))
+                if (!string.IsNullOrEmpty(model.PhoneNumber) && !Regex.IsMatch(model.PhoneNumber, @"^03\d{9}$"))
                     return new FailActionResponse<UserProfileResponseDto>("Phone number must be 11 digits.");
 
                 user.FullName = model.FullName ?? user.FullName;
                 user.PhoneNumber = model.PhoneNumber ?? user.PhoneNumber;
 
-                var result = await _userManager.UpdateAsync(user);
+                var result = await userManager.UpdateAsync(user);
                 if (!result.Succeeded)
                     return new FailActionResponse<UserProfileResponseDto>(result.Errors.Select(e => e.Description).ToList());
 
-                var roles = await _userManager.GetRolesAsync(user);
+                var roles = await userManager.GetRolesAsync(user);
                 var updatedProfile = new UserProfileResponseDto
                 {
                     UserId = user.Id.ToString(),
@@ -435,35 +420,35 @@ namespace NazarMahal.Infrastructure.Services
                 if (model == null || string.IsNullOrEmpty(model.NewRole))
                     return new FailActionResponse<MessageResponseDto>("Invalid data.");
 
-                var user = await _userManager.FindByIdAsync(userId);
+                var user = await userManager.FindByIdAsync(userId);
                 if (user == null)
                     return new NotFoundActionResponse<MessageResponseDto>("User not found.");
 
-                var currentRoles = await _userManager.GetRolesAsync(user);
-                await _userManager.RemoveFromRolesAsync(user, currentRoles);
+                var currentRoles = await userManager.GetRolesAsync(user);
+                _ = await userManager.RemoveFromRolesAsync(user, currentRoles);
 
-                if (!await _roleManager.RoleExistsAsync(model.NewRole))
+                if (!await roleManager.RoleExistsAsync(model.NewRole))
                 {
                     var role = new ApplicationRole { Name = model.NewRole };
-                    await _roleManager.CreateAsync(role);
+                    _ = await roleManager.CreateAsync(role);
                 }
 
-                await _userManager.AddToRoleAsync(user, model.NewRole);
+                _ = await userManager.AddToRoleAsync(user, model.NewRole);
 
                 // Update UserType in database (source of truth)
                 user.UserType = model.NewRole;
-                await _userManager.UpdateAsync(user);
+                _ = await userManager.UpdateAsync(user);
 
                 // Update UserType claim
-                var claims = await _userManager.GetClaimsAsync(user);
+                var claims = await userManager.GetClaimsAsync(user);
                 var userTypeClaim = claims.FirstOrDefault(c => c.Type == "UserType");
                 if (userTypeClaim != null)
                 {
-                    await _userManager.RemoveClaimAsync(user, userTypeClaim);
+                    _ = await userManager.RemoveClaimAsync(user, userTypeClaim);
                 }
 
                 var newUserTypeClaim = new System.Security.Claims.Claim("UserType", model.NewRole);
-                await _userManager.AddClaimAsync(user, newUserTypeClaim);
+                _ = await userManager.AddClaimAsync(user, newUserTypeClaim);
 
                 return new OkActionResponse<MessageResponseDto>(
                     new MessageResponseDto { Message = $"User role updated to {model.NewRole} successfully." });
@@ -478,12 +463,12 @@ namespace NazarMahal.Infrastructure.Services
         {
             try
             {
-                var user = await _userManager.FindByIdAsync(userId);
+                var user = await userManager.FindByIdAsync(userId);
                 if (user == null)
                     return new NotFoundActionResponse<MessageResponseDto>("User not found.");
 
                 user.IsDisabled = false;
-                var result = await _userManager.UpdateAsync(user);
+                var result = await userManager.UpdateAsync(user);
                 if (!result.Succeeded)
                     return new FailActionResponse<MessageResponseDto>(result.Errors.Select(e => e.Description).ToList());
 
@@ -500,12 +485,12 @@ namespace NazarMahal.Infrastructure.Services
         {
             try
             {
-                var user = await _userManager.FindByIdAsync(userId);
+                var user = await userManager.FindByIdAsync(userId);
                 if (user == null)
                     return new NotFoundActionResponse<MessageResponseDto>("User not found.");
 
                 user.IsDisabled = true;
-                var result = await _userManager.UpdateAsync(user);
+                var result = await userManager.UpdateAsync(user);
                 if (!result.Succeeded)
                     return new FailActionResponse<MessageResponseDto>(result.Errors.Select(e => e.Description).ToList());
 
@@ -522,12 +507,12 @@ namespace NazarMahal.Infrastructure.Services
         {
             try
             {
-                var users = _userManager.Users.ToList();
+                var users = userManager.Users.ToList();
                 var userList = new List<UserListResponseDto>();
 
                 foreach (var user in users)
                 {
-                    var roles = await _userManager.GetRolesAsync(user);
+                    var roles = await userManager.GetRolesAsync(user);
 
                     userList.Add(new UserListResponseDto
                     {
@@ -554,7 +539,7 @@ namespace NazarMahal.Infrastructure.Services
         {
             try
             {
-                var customers = await _userManager.GetUsersInRoleAsync(RoleConstants.Customer);
+                var customers = await userManager.GetUsersInRoleAsync(RoleConstants.Customer);
                 var customerList = new List<UserListResponseDto>();
 
                 foreach (var customer in customers)
@@ -584,11 +569,11 @@ namespace NazarMahal.Infrastructure.Services
         {
             try
             {
-                var user = await _userManager.FindByIdAsync(userId);
+                var user = await userManager.FindByIdAsync(userId);
                 if (user == null)
                     return new NotFoundActionResponse<UserProfileResponseDto>("User not found.");
 
-                var roles = await _userManager.GetRolesAsync(user);
+                var roles = await userManager.GetRolesAsync(user);
 
                 var userProfile = new UserProfileResponseDto
                 {
@@ -621,13 +606,13 @@ namespace NazarMahal.Infrastructure.Services
                     return new FailActionResponse<MessageResponseDto>("Invalid confirmation link.");
                 }
 
-                var user = await _userManager.FindByIdAsync(userId);
+                var user = await userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
                     return new NotFoundActionResponse<MessageResponseDto>("User not found.");
                 }
 
-                var result = await _userManager.ConfirmEmailAsync(user, token);
+                var result = await userManager.ConfirmEmailAsync(user, token);
                 if (result.Succeeded)
                 {
                     return new OkActionResponse<MessageResponseDto>(
@@ -653,15 +638,15 @@ namespace NazarMahal.Infrastructure.Services
                     return new FailActionResponse<MessageResponseDto>("Invalid token or userId.");
                 }
 
-                var user = await _userManager.FindByIdAsync(userId);
+                var user = await userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
                     return new NotFoundActionResponse<MessageResponseDto>("Invalid user.");
                 }
 
-                var isTokenValid = await _userManager.VerifyUserTokenAsync(
+                var isTokenValid = await userManager.VerifyUserTokenAsync(
                     user,
-                    _userManager.Options.Tokens.PasswordResetTokenProvider,
+                    userManager.Options.Tokens.PasswordResetTokenProvider,
                     "ResetPassword",
                     token);
 
@@ -683,7 +668,7 @@ namespace NazarMahal.Infrastructure.Services
         {
             try
             {
-                var user = await _userManager.FindByIdAsync(userId);
+                var user = await userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
                     return new NotFoundActionResponse<MessageResponseDto>("User not found.");

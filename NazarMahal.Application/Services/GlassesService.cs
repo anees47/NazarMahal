@@ -41,12 +41,16 @@ namespace NazarMahal.Application.Services
                 if (newGlassesCategoryRequest == null)
                     return new FailActionResponse<GlassesCategoryDto>("Request body cannot be null.");
 
-                var categoryName = await _glassesRepository.FindGlassesCategoryByName(newGlassesCategoryRequest.CategoryName?.Trim());
+                var trimmedCategoryName = newGlassesCategoryRequest.CategoryName?.Trim();
+                if (string.IsNullOrWhiteSpace(trimmedCategoryName))
+                    return new FailActionResponse<GlassesCategoryDto>("Category name is required.");
+
+                var categoryName = await _glassesRepository.FindGlassesCategoryByName(trimmedCategoryName);
 
                 if (categoryName != null)
                     return new FailActionResponse<GlassesCategoryDto>($"Category name already exists.");
 
-                var newGlassesCategory = GlassesCategory.Create(newGlassesCategoryRequest.CategoryName, newGlassesCategoryRequest.isActive);
+                var newGlassesCategory = GlassesCategory.Create(newGlassesCategoryRequest.CategoryName, newGlassesCategoryRequest.IsActive);
                 var savedCategory = await _glassesRepository.AddGlassesCategory(newGlassesCategory);
                 await _glassesRepository.CompletedAsync();
 
@@ -65,11 +69,11 @@ namespace NazarMahal.Application.Services
                 var glassesCategory = await _glassesRepository.GetGlassesCategoryById(updateGlassesCategoryRequestDto.CategoryId);
                 if (glassesCategory == null)
                     return new NotFoundActionResponse<GlassesCategoryDto>("Category not found");
-                
+
                 var existingCategory = await _glassesRepository.FindGlassesCategoryByName(updateGlassesCategoryRequestDto.Name);
                 if (existingCategory != null)
                 {
-                    if (updateGlassesCategoryRequestDto.CategoryId != existingCategory.Id) 
+                    if (updateGlassesCategoryRequestDto.CategoryId != existingCategory.Id)
                         return ActionResponse<GlassesCategoryDto>.Fail("Category Name already exist");
                 }
 
@@ -96,7 +100,11 @@ namespace NazarMahal.Application.Services
                 if (glassesCategory == null)
                     return new NotFoundActionResponse<GlassesSubCategoryDto>("Category not found.");
 
-                var subCategoryName = await _glassesRepository.FindGlassesSubCategoryByName(newGlassesSubCategoryRequest.Name?.Trim(), newGlassesSubCategoryRequest.CategoryId);
+                var trimmedSubCategoryName = newGlassesSubCategoryRequest.Name?.Trim();
+                if (string.IsNullOrWhiteSpace(trimmedSubCategoryName))
+                    return new FailActionResponse<GlassesSubCategoryDto>("SubCategory name is required.");
+
+                var subCategoryName = await _glassesRepository.FindGlassesSubCategoryByName(trimmedSubCategoryName, newGlassesSubCategoryRequest.CategoryId);
                 if (subCategoryName != null)
                     return new FailActionResponse<GlassesSubCategoryDto>("SubCategory Name already exists.");
 
@@ -106,7 +114,7 @@ namespace NazarMahal.Application.Services
 
                 var outputGlassesSubCategory = savedSubCategory.ToGlassesSubCategoryDto();
                 outputGlassesSubCategory.CategoryName = glassesCategory.Name;
-                
+
                 return new OkActionResponse<GlassesSubCategoryDto>(outputGlassesSubCategory);
             }
             catch (Exception ex)
@@ -150,7 +158,7 @@ namespace NazarMahal.Application.Services
                 var glassesSubCategory = await _glassesRepository.GetGlassesSubCategoryById(glassesSubCategoryId);
                 if (glassesSubCategory == null)
                     return new NotFoundActionResponse<GlassesSubcategoriesListDto>("SubCategory not found.");
-                
+
                 return new OkActionResponse<GlassesSubcategoriesListDto>(glassesSubCategory.ToGlassesSubcategoriesListDto());
             }
             catch (Exception ex)
@@ -167,7 +175,7 @@ namespace NazarMahal.Application.Services
                 if (glassesSubCategory == null)
                     return new NotFoundActionResponse<GlassesSubCategoryDto>("SubCategory not found.");
 
-                await _glassesRepository.DeleteGlassesSubcategoryById(glassesSubCategoryId);
+                _ = await _glassesRepository.DeleteGlassesSubcategoryById(glassesSubCategoryId);
                 await _glassesRepository.CompletedAsync();
 
                 return new OkActionResponse<GlassesSubCategoryDto>();
@@ -190,14 +198,18 @@ namespace NazarMahal.Application.Services
                 if (glassesSubCategory == null)
                     return new NotFoundActionResponse<GlassesSubCategoryDto>("SubCategory not found.");
 
-                var existingSubCategory = await _glassesRepository.FindGlassesSubCategoryByName(updateGlassesSubCategoryRequest.Name?.Trim(), updateGlassesSubCategoryRequest.CategoryId);
+                var trimmedSubCategoryName = updateGlassesSubCategoryRequest.Name?.Trim();
+                if (string.IsNullOrWhiteSpace(trimmedSubCategoryName))
+                    return new FailActionResponse<GlassesSubCategoryDto>("SubCategory name is required.");
+
+                var existingSubCategory = await _glassesRepository.FindGlassesSubCategoryByName(trimmedSubCategoryName, updateGlassesSubCategoryRequest.CategoryId);
                 if (existingSubCategory != null)
                 {
-                    if (updateGlassesSubCategoryRequest.SubCategoryId != existingSubCategory.Id) 
+                    if (updateGlassesSubCategoryRequest.SubCategoryId != existingSubCategory.Id)
                         return ActionResponse<GlassesSubCategoryDto>.Fail("SubCategory name already exists.");
                 }
 
-                glassesSubCategory.UpdateGlassesSubCategoryInfo(updateGlassesSubCategoryRequest.Name, updateGlassesSubCategoryRequest.CategoryId, updateGlassesSubCategoryRequest.IsActive);
+                glassesSubCategory.UpdateGlassesSubCategoryInfo(updateGlassesSubCategoryRequest.Name ?? string.Empty, updateGlassesSubCategoryRequest.CategoryId, updateGlassesSubCategoryRequest.IsActive);
                 await _glassesRepository.CompletedAsync();
 
                 var outputGlassesSubCategory = glassesSubCategory.ToGlassesSubCategoryDto();
@@ -292,12 +304,12 @@ namespace NazarMahal.Application.Services
 
             try
             {
-                var glassesCategory = await _glassesReadModelRepository.GetGlassesCategoryById((int)newGlassesRequest.CategoryId);
-                if (glassesCategory == null) 
+                var glassesCategory = await _glassesReadModelRepository.GetGlassesCategoryById(newGlassesRequest.CategoryId);
+                if (glassesCategory == null)
                     return new NotFoundActionResponse<GlassesDto>("Category not found");
 
                 var glassesSubCategory = await _glassesRepository.GetGlassesSubCategoryById(newGlassesRequest.SubCategoryId);
-                if (glassesSubCategory == null) 
+                if (glassesSubCategory == null)
                     return new NotFoundActionResponse<GlassesDto>("SubCategory not found");
 
                 var subCategoriesForCategory = await _glassesRepository.GetGlassesSubcategoryByCategoryId(newGlassesRequest.CategoryId);
@@ -309,7 +321,7 @@ namespace NazarMahal.Application.Services
                     newGlassesRequest.LensType, newGlassesRequest.FrameType, newGlassesRequest.Color, newGlassesRequest.CategoryId, newGlassesRequest.SubCategoryId,
                     newGlassesRequest.IsActive, newGlassesRequest.AvailableQuantity);
 
-                await _glassesRepository.AddGlasses(newGlasses);
+                _ = await _glassesRepository.AddGlasses(newGlasses);
                 await _glassesRepository.CompletedAsync();
 
                 if (newGlassesRequest.Attachments != null && newGlassesRequest.Attachments.Any())
@@ -319,7 +331,7 @@ namespace NazarMahal.Application.Services
                         return new FailActionResponse<GlassesDto>("Failed to save images. Please try again.");
                 }
 
-                return new OkActionResponse<GlassesDto>(newGlasses.ToGlassesDto());
+                return new OkActionResponse<GlassesDto>(newGlasses.ToGlassesDto() ?? throw new InvalidOperationException("Failed to map glasses to DTO"));
             }
             catch (Exception ex)
             {
@@ -352,7 +364,7 @@ namespace NazarMahal.Application.Services
                     var fileName = Path.GetFileName(savedRelativePath);
 
                     var newImage = GlassesAttachment.Create(glassesId, fileName, savedRelativePath, fileContentType);
-                    await _glassesRepository.AddGlassesAttachment(newImage);
+                    _ = await _glassesRepository.AddGlassesAttachment(newImage);
 
                     newImageList.Add(newImage);
                 }
@@ -372,11 +384,11 @@ namespace NazarMahal.Application.Services
             try
             {
                 var glassesCategory = await _glassesReadModelRepository.GetGlassesCategoryById(updateGlassesRequest.CategoryId);
-                if (glassesCategory == null) 
+                if (glassesCategory == null)
                     return new NotFoundActionResponse<GlassesDto>("Category not found");
 
                 var glassesSubCategory = await _glassesRepository.GetGlassesSubCategoryById(updateGlassesRequest.SubCategoryId);
-                if (glassesSubCategory == null) 
+                if (glassesSubCategory == null)
                     return new NotFoundActionResponse<GlassesDto>("SubCategory not found");
 
                 var subCategoriesForCategory = await _glassesRepository.GetGlassesSubcategoryByCategoryId(updateGlassesRequest.CategoryId);
@@ -385,7 +397,7 @@ namespace NazarMahal.Application.Services
                     return new NotFoundActionResponse<GlassesDto>("Invalid SubCategoryId or CategoryId. The provided SubCategory does not belong to the specified Category.");
 
                 var existingGlasses = await _glassesRepository.GetGlassesById(updateGlassesRequest.GlassesId);
-                if (existingGlasses == null) 
+                if (existingGlasses == null)
                     return new NotFoundActionResponse<GlassesDto>("Glasses not found");
 
                 existingGlasses.UpdateGlassesInfo(updateGlassesRequest.Name, updateGlassesRequest.Description, updateGlassesRequest.Price, updateGlassesRequest.Brand,
@@ -409,7 +421,7 @@ namespace NazarMahal.Application.Services
                         return new FailActionResponse<GlassesDto>(deleteGlassesAttachmentsResult.Messages);
                 }
 
-                return new OkActionResponse<GlassesDto>(existingGlasses.ToGlassesDto());
+                return new OkActionResponse<GlassesDto>(existingGlasses.ToGlassesDto() ?? throw new InvalidOperationException("Failed to map glasses to DTO"));
             }
             catch (Exception ex)
             {
@@ -431,7 +443,7 @@ namespace NazarMahal.Application.Services
 
                 await _glassesRepository.CompletedAsync();
 
-                return new OkActionResponse<GlassesDto>(glasses.ToGlassesDto());
+                return new OkActionResponse<GlassesDto>(glasses.ToGlassesDto() ?? throw new InvalidOperationException("Failed to map glasses to DTO"));
             }
             catch (Exception ex)
             {
@@ -443,7 +455,7 @@ namespace NazarMahal.Application.Services
         {
             try
             {
-                if (deletedAttachmentIds == null) 
+                if (deletedAttachmentIds == null)
                     return ActionResponse<NothingResponseDto>.Ok(NothingResponseDto.Value);
 
                 var glassesAttachmentByIds = await _glassesRepository.GetGlassesAttachmentsByIds(glassesId, deletedAttachmentIds);

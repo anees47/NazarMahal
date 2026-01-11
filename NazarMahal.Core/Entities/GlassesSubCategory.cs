@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace NazarMahal.Core.Entities
@@ -9,10 +9,10 @@ namespace NazarMahal.Core.Entities
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         public int CategoryId { get; set; }
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
         public bool IsActive { get; set; }
 
-        public virtual GlassesCategory Category { get; set; }
+        public virtual GlassesCategory Category { get; set; } = null!;
 
         protected GlassesSubCategory() { }
         protected GlassesSubCategory(string name, int categoryId, bool isActive)
@@ -33,7 +33,7 @@ namespace NazarMahal.Core.Entities
             Name = name;
             IsActive = isActive;
         }
-        
+
         public void SoftDeleteSubCategory()
         {
             IsActive = false;

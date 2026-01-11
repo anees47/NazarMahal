@@ -8,13 +8,13 @@ namespace NazarMahal.Infrastructure.EntityConfiguration
     {
         public void Configure(EntityTypeBuilder<GlassesCategory> builder)
         {
-            builder.ToTable("GlassesCategory", "dbo");
+            _ = builder.ToTable("GlassesCategory", "dbo");
 
-            builder.HasKey(x => x.Id)
+            _ = builder.HasKey(x => x.Id)
                 .HasName("PK_GlassesCategory")
                 .IsClustered();
 
-            builder.Property(x => x.Name)
+            _ = builder.Property(x => x.Name)
                 .HasColumnName("Name")
                 .HasColumnType("NVARCHAR(500)")
                 .IsRequired();

@@ -3,12 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using NazarMahal.API.Extensions;
 using NazarMahal.Application.Common;
 using NazarMahal.Application.Interfaces;
-using NazarMahal.Application.Models;
 using NazarMahal.Application.RequestDto.UserRequestDto;
 using NazarMahal.Application.ResponseDto.UserResponseDto;
-using NazarMahal.Core.ActionResponses;
 using NazarMahal.Core.Enums;
-using NazarMahal.Infrastructure.Services;
 
 namespace NazarMahal.API.Controllers
 {
@@ -48,7 +45,7 @@ namespace NazarMahal.API.Controllers
             var response = await userService.UpdateUserInfoByIdAsync(request);
             return response.ToApiResponse();
         }
-       
+
         [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.SuperAdmin}")]
         [HttpPatch("{id}")]
         public async Task<ActionResult<ApiResponseDto<bool>>> UpdateUserStatus(int id, [FromBody] UpdateUserStatusRequestDto request)

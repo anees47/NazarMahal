@@ -8,9 +8,10 @@ namespace NazarMahal.Application.Mappers
 {
     public static class OrderMappingExtensions
     {
-        public static OrderDto ToOrderDto(this Order order)
+        public static OrderDto? ToOrderDto(this Order order)
         {
-            if (order == null) return null;
+            if (order == null)
+                return null;
 
             return new OrderDto
             {
@@ -26,16 +27,17 @@ namespace NazarMahal.Application.Mappers
                 FirstName = order.FirstName,
                 LastName = order.LastName,
                 PaymentMethod = order.PaymentMethod,
-                OrderItems = order.OrderItems?.Select(oi => oi.ToOrderItemDto()).ToList() ?? new List<OrderItemDto>()
+                OrderItems = order.OrderItems?.Select(oi => oi.ToOrderItemDto()).Where(oi => oi != null).ToList()! ?? []
             };
         }
 
         /// <summary>
         /// Map Order to OrderResponseDto
         /// </summary>
-        public static OrderResponseDto ToOrderResponseDto(this Order order)
+        public static OrderResponseDto? ToOrderResponseDto(this Order order)
         {
-            if (order == null) return null;
+            if (order == null)
+                return null;
 
             var orderDate = order.OrderCreatedDate.ToDateTime(order.OrderCreatedTime);
 
@@ -52,7 +54,7 @@ namespace NazarMahal.Application.Mappers
                 FirstName = order.FirstName,
                 LastName = order.LastName,
                 PaymentMethod = order.PaymentMethod,
-                OrderItems = order.OrderItems?.Select(oi => oi.ToOrderItemDto()).ToList() ?? new List<OrderItemDto>()
+                OrderItems = order.OrderItems?.Select(oi => oi.ToOrderItemDto()).Where(oi => oi != null).ToList()! ?? []
             };
         }
 
@@ -61,7 +63,8 @@ namespace NazarMahal.Application.Mappers
         /// </summary>
         public static OrderItemDto ToOrderItemDto(this OrderItem orderItem)
         {
-            if (orderItem == null) return null;
+            if (orderItem == null)
+                return null;
 
             return new OrderItemDto
             {
@@ -82,11 +85,13 @@ namespace NazarMahal.Application.Mappers
                     FrameType = orderItem.Glasses.FrameType,
                     LensType = orderItem.Glasses.LensType,
                     Color = orderItem.Glasses.Color,
-                    Attachments =  orderItem.Glasses.Attachments?.Select(a => new GlassesAttachmentDto
+                    Attachments = orderItem.Glasses.Attachments?.Select(a => new GlassesAttachmentDto
                     {
                         Id = a.Id,
                         FileName = a.FileName,
+                        FileType = a.FileType,
                         StoragePath = a.StoragePath,
+                        ReferenceId = a.GlassesId
                     }).ToList()
                 } : null
             };
@@ -97,7 +102,8 @@ namespace NazarMahal.Application.Mappers
         /// </summary>
         public static IEnumerable<OrderResponseDto> ToOrderResponseDtoList(this IEnumerable<Order> orders)
         {
-            if (orders == null) return Enumerable.Empty<OrderResponseDto>();
+            if (orders == null)
+                return Enumerable.Empty<OrderResponseDto>();
             return orders.Select(o => o.ToOrderResponseDto());
         }
 
@@ -106,8 +112,9 @@ namespace NazarMahal.Application.Mappers
         /// </summary>
         public static List<OrderItemDto> ToOrderItemDtoList(this IEnumerable<OrderItem> items)
         {
-            if (items == null) return new List<OrderItemDto>();
-            return items.Select(i => i.ToOrderItemDto()).ToList();
+            if (items == null)
+                return [];
+            return items.Select(i => i.ToOrderItemDto()).Where(i => i != null).ToList()!;
         }
 
         /// <summary>
@@ -115,7 +122,8 @@ namespace NazarMahal.Application.Mappers
         /// </summary>
         public static OrderItem ToOrderItem(this OrderItemRequestDto request)
         {
-            if (request == null) return null;
+            if (request == null)
+                return null;
 
             return new OrderItem
             {
@@ -130,7 +138,8 @@ namespace NazarMahal.Application.Mappers
         /// </summary>
         public static List<OrderItem> ToOrderItemList(this IEnumerable<OrderItemRequestDto> requests)
         {
-            if (requests == null) return new List<OrderItem>();
+            if (requests == null)
+                return [];
             return requests.Select(r => r.ToOrderItem()).ToList();
         }
     }

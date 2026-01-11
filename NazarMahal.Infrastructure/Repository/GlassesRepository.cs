@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using NazarMahal.Infrastructure.Data;
-using NazarMahal.Core.Entities;
 using NazarMahal.Application.Interfaces.IRepository;
+using NazarMahal.Core.Entities;
+using NazarMahal.Infrastructure.Data;
 
 namespace NazarMahal.Infrastructure.Repository
 {
@@ -15,7 +15,7 @@ namespace NazarMahal.Infrastructure.Repository
         }
         public async Task CompletedAsync()
         {
-            await _dbContext.SaveChangesAsync();
+            _ = await _dbContext.SaveChangesAsync();
         }
 
         #region Glasses Category
@@ -85,8 +85,8 @@ namespace NazarMahal.Infrastructure.Repository
             {
                 return null;
             }
-            _dbContext.GlassesSubCategories.Remove(entity);
-            await _dbContext.SaveChangesAsync();
+            _ = _dbContext.GlassesSubCategories.Remove(entity);
+            _ = await _dbContext.SaveChangesAsync();
             return entity;
         }
 
@@ -137,8 +137,8 @@ namespace NazarMahal.Infrastructure.Repository
         }
         public async Task UpdateGlasses(Glasses glasses)
         {
-            _dbContext.Glasses.Update(glasses);
-            await _dbContext.SaveChangesAsync();
+            _ = _dbContext.Glasses.Update(glasses);
+            _ = await _dbContext.SaveChangesAsync();
         }
 
         public async Task<bool> DeleteGlassesById(int glassesId)
@@ -152,8 +152,8 @@ namespace NazarMahal.Infrastructure.Repository
 
             // Soft delete: Set IsActive to false instead of removing from database
             entity.IsActive = false;
-            _dbContext.Glasses.Update(entity);
-            await _dbContext.SaveChangesAsync();
+            _ = _dbContext.Glasses.Update(entity);
+            _ = await _dbContext.SaveChangesAsync();
             return true;
         }
 

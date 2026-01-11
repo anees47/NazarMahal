@@ -8,12 +8,12 @@ namespace NazarMahal.Application.Models
 
         [Required(ErrorMessage = "Phone number is required")]
         [RegularExpression(@"^03\d{9}$", ErrorMessage = "Phone number must be 11 digits.")]
-        public string PhoneNumber { get; set; }
+        public required string PhoneNumber { get; set; }
         [Required]
         [EmailAddress]
-        public string Email { get; set; }
+        public required string Email { get; set; }
 
-        public string Password { get; set; }
-        public string ConfirmPassword { get; set; }
+        public required string Password { get; set; }
+        public required string ConfirmPassword { get; set; }
     }
 }

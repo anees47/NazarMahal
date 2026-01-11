@@ -6,7 +6,7 @@ namespace NazarMahal.Application.Common
     public class FileContentType : ValueObject
     {
 
-        public string Value { get; }
+        public string Value { get; } = string.Empty;
 
         protected override IEnumerable<object> GetEqualityComponents()
         {
@@ -24,16 +24,16 @@ namespace NazarMahal.Application.Common
 
         public static ActionResponse<FileContentType> Create(string contentType)
         {
-                if (string.IsNullOrEmpty(contentType))
+            if (string.IsNullOrEmpty(contentType))
                 return new FailActionResponse<FileContentType>(new FileContentType(string.Empty), "Content type is missing");
 
             return new OkActionResponse<FileContentType>(new FileContentType(contentType));
         }
 
 
-        public static implicit operator string(FileContentType contentType)
+        public static implicit operator string?(FileContentType? contentType)
         {
-            return contentType == null ? null : contentType.Value;
+            return contentType?.Value;
         }
 
         public override string ToString()

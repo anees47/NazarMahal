@@ -7,18 +7,18 @@ namespace NazarMahal.Core.ActionResponses
 
         public UnauthorizedActionResponse()
         {
-            SetDefault(default);
+            SetDefault(default!);
         }
 
-        public UnauthorizedActionResponse(string message) : this(default, message)
+        public UnauthorizedActionResponse(string message) : this(default!, message)
         {
         }
 
-        public UnauthorizedActionResponse(List<string> messages) : this(default, messages)
+        public UnauthorizedActionResponse(List<string> messages) : this(default!, messages)
         {
         }
 
-        public UnauthorizedActionResponse(T payload, string message = null)
+        public UnauthorizedActionResponse(T payload, string? message = null)
         {
             Message = message;
             SetDefault(payload);

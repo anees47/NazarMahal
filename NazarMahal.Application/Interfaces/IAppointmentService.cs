@@ -14,14 +14,12 @@ namespace NazarMahal.Application.Interfaces
         Task<ActionResponse<AppointmentDto>> UpdateAppointment(AppointmentUpdateRequestDto appointmentUpdateRequestDto);
         Task<ActionResponse<IEnumerable<AppointmentDto>>> GetAppointmentByUserId(int userId);
         Task<ActionResponse<IEnumerable<AppointmentDto>>> GetAllAppointments();
-
-        // New methods for additional endpoints
         Task<ActionResponse<AppointmentDto>> GetAppointmentById(int appointmentId);
         Task<ActionResponse<IEnumerable<AppointmentDto>>> GetAppointmentsByDateRange(DateOnly startDate, DateOnly endDate);
         Task<ActionResponse<IEnumerable<AppointmentDto>>> GetAppointmentsByStatus(AppointmentEnums.AppointmentStatus status);
         Task<ActionResponse<IEnumerable<AppointmentDto>>> GetTodaysAppointments();
         Task<ActionResponse<IEnumerable<AppointmentDto>>> GetUpcomingAppointments(int days);
-        Task<ActionResponse<AppointmentDto>> CompleteAppointment(int appointmentId, string completionNotes = null);
+        Task<ActionResponse<AppointmentDto>> CompleteAppointment(int appointmentId, string? completionNotes = null);
         Task<ActionResponse<IEnumerable<AppointmentDto>>> SearchAppointmentsByFullName(string fullName, DateOnly? date = null);
     }
 }

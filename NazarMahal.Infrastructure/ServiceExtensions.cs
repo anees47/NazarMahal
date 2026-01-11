@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,7 +21,7 @@ public static class ServiceExtensions
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        services.ConfigureApplicationCookie(options =>
+        _ = services.ConfigureApplicationCookie(options =>
         {
             options.Events.OnRedirectToLogin = context =>
             {
@@ -37,53 +36,51 @@ public static class ServiceExtensions
             };
         });
 
-        services.AddHttpContextAccessor();
-        services.AddDbContext<ApplicationDbContext>(options =>
+        _ = services.AddHttpContextAccessor();
+        _ = services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlServer(
                 configuration.GetConnectionString("DefaultConnection"),
                 sql =>
                 {
-                    sql.EnableRetryOnFailure(
+                    _ = sql.EnableRetryOnFailure(
                         maxRetryCount: 5,
                         maxRetryDelay: TimeSpan.FromSeconds(10),
                         errorNumbersToAdd: null);
                 })
         );
 
-        services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
+        _ = services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
             {
                 options.Tokens.PasswordResetTokenProvider = TokenOptions.DefaultProvider;
                 options.Password.RequiredLength = 8;
                 options.User.RequireUniqueEmail = true;
             }).AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
 
-        services.Configure<DataProtectionTokenProviderOptions>(options =>
+        _ = services.Configure<DataProtectionTokenProviderOptions>(options =>
         {
             options.TokenLifespan = TimeSpan.FromMinutes(10);
         });
 
-        services.AddScoped<IGlassesRepository, GlassesRepository>();
-        services.AddScoped<IGlassesReadModelRepository, GlassesReadModelRepository>();
-        services.AddScoped<IUserRepository, UserRepository>();
-        services.AddScoped<IOrderRepository, OrderRepository>();
-        services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+        _ = services.AddScoped<IGlassesRepository, GlassesRepository>();
+        _ = services.AddScoped<IGlassesReadModelRepository, GlassesReadModelRepository>();
+        _ = services.AddScoped<IUserRepository, UserRepository>();
+        _ = services.AddScoped<IOrderRepository, OrderRepository>();
+        _ = services.AddScoped<IAppointmentRepository, AppointmentRepository>();
 
-        services.AddScoped<IEmailService, EmailService>();
-        services.AddScoped<INotificationService, NotificationService>();
-        services.AddScoped<IAuthService, AuthService>();
+        _ = services.AddScoped<IEmailService, EmailService>();
+        _ = services.AddScoped<INotificationService, NotificationService>();
+        _ = services.AddScoped<IAuthService, AuthService>();
 
-        services.AddScoped<Core.Abstractions.IRequestContextAccessor, RequestContextAccessor>();
-        services.AddScoped<IFileStorage, FileStorage>(sp => new FileStorage("wwwroot"));
+        _ = services.AddScoped<Core.Abstractions.IRequestContextAccessor, RequestContextAccessor>();
+        _ = services.AddScoped<IFileStorage, FileStorage>(sp => new FileStorage("wwwroot"));
 
-        // IDbConnection factory that uses the pooled connection from DbContext
-        // This ensures Dapper uses the same connection pool as EF Core
-        services.AddScoped<IDbConnection>(sp =>
+        _ = services.AddScoped<IDbConnection>(sp =>
         {
             var dbContext = sp.GetRequiredService<ApplicationDbContext>();
             return dbContext.Database.GetDbConnection();
         });
 
-        services.AddAuthentication(options =>
+        _ = services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
             options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -107,7 +104,7 @@ public static class ServiceExtensions
             };
         });
 
-        services.AddAuthorizationBuilder().AddPolicy("RequireAdminUserType", policy =>
+        _ = services.AddAuthorizationBuilder().AddPolicy("RequireAdminUserType", policy =>
                 policy.RequireClaim("UserType", "Admin"));
 
         return services;

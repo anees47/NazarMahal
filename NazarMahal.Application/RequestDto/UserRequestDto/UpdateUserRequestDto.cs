@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Http;
-using NazarMahal.Core.Abstractions;
 
 using System.Text.Json.Serialization;
 

@@ -12,9 +12,10 @@ namespace NazarMahal.Infrastructure.Mappers
         /// <summary>
         /// Map ApplicationUser to UserResponseDto
         /// </summary>
-        public static UserResponseDto ToUserResponseDto(this ApplicationUser user)
+        public static UserResponseDto? ToUserResponseDto(this ApplicationUser user)
         {
-            if (user == null) return null;
+            if (user == null)
+                return null;
 
             return new UserResponseDto
             {
@@ -34,9 +35,10 @@ namespace NazarMahal.Infrastructure.Mappers
         /// <summary>
         /// Map ApplicationUser to UserListResponseDto
         /// </summary>
-        public static UserListResponseDto ToUserListResponseDto(this ApplicationUser user)
+        public static UserListResponseDto? ToUserListResponseDto(this ApplicationUser user)
         {
-            if (user == null) return null;
+            if (user == null)
+                return null;
 
             return new UserListResponseDto
             {
@@ -57,8 +59,9 @@ namespace NazarMahal.Infrastructure.Mappers
         /// </summary>
         public static IEnumerable<UserResponseDto> ToUserResponseDtoList(this IEnumerable<ApplicationUser> users)
         {
-            if (users == null) return Enumerable.Empty<UserResponseDto>();
-            return users.Select(u => u.ToUserResponseDto());
+            if (users == null)
+                return Enumerable.Empty<UserResponseDto>();
+            return users.Select(u => u.ToUserResponseDto()).Where(u => u != null).ToList()!;
         }
 
         /// <summary>
@@ -66,16 +69,18 @@ namespace NazarMahal.Infrastructure.Mappers
         /// </summary>
         public static List<UserListResponseDto> ToUserListResponseDtoList(this IEnumerable<ApplicationUser> users)
         {
-            if (users == null) return new List<UserListResponseDto>();
-            return users.Select(u => u.ToUserListResponseDto()).ToList();
+            if (users == null)
+                return [];
+            return users.Select(u => u.ToUserListResponseDto()).Where(u => u != null).ToList()!;
         }
 
         /// <summary>
         /// Map CreateNewUserRequestDto to ApplicationUser
         /// </summary>
-        public static ApplicationUser ToApplicationUser(this CreateNewUserRequestDto request)
+        public static ApplicationUser? ToApplicationUser(this CreateNewUserRequestDto request)
         {
-            if (request == null) return null;
+            if (request == null)
+                return null;
 
             return new ApplicationUser
             {
@@ -92,9 +97,10 @@ namespace NazarMahal.Infrastructure.Mappers
         /// <summary>
         /// Map UserResponseDto to UpdateUserRequestDto
         /// </summary>
-        public static UpdateUserRequestDto ToUpdateUserRequestDto(this UserResponseDto user)
+        public static UpdateUserRequestDto? ToUpdateUserRequestDto(this UserResponseDto user)
         {
-            if (user == null) return null;
+            if (user == null)
+                return null;
 
             return new UpdateUserRequestDto
             {
@@ -109,16 +115,17 @@ namespace NazarMahal.Infrastructure.Mappers
         /// <summary>
         /// Map UserResponseDto to UserListResponseDto
         /// </summary>
-        public static UserListResponseDto ToUserListResponseDto(this UserResponseDto user)
+        public static UserListResponseDto? ToUserListResponseDto(this UserResponseDto user)
         {
-            if (user == null) return null;
+            if (user == null)
+                return null;
 
             return new UserListResponseDto
             {
                 UserId = user.Id.ToString(),
                 FullName = user.FullName,
                 Email = user.Email,
-                PhoneNumber = user.PhoneNumber,
+                PhoneNumber = user.PhoneNumber ?? string.Empty,
                 Address = user.Address,
                 UserType = string.Empty,
                 IsEmailConfirmed = false,

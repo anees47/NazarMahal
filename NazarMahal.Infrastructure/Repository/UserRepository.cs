@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
-using NazarMahal.Infrastructure.Data;
-using NazarMahal.Infrastructure.Mappers;
+using NazarMahal.Application.Interfaces;
 using NazarMahal.Application.Interfaces.IRepository;
 using NazarMahal.Application.RequestDto.UserRequestDto;
 using NazarMahal.Application.ResponseDto.UserResponseDto;
-using NazarMahal.Application.Interfaces;
+using NazarMahal.Infrastructure.Data;
+using NazarMahal.Infrastructure.Mappers;
 
 namespace NazarMahal.Infrastructure.Repository
 {
@@ -18,7 +18,8 @@ namespace NazarMahal.Infrastructure.Repository
         public async Task<bool> ChangePasswordAsync(int userId, ChangeUserPasswordRequestDto changeUserPasswordRequestDto)
         {
             var user = await _userManager.FindByIdAsync(userId.ToString());
-            if (user == null) return false;
+            if (user == null)
+                return false;
 
             var result = await _userManager.ChangePasswordAsync(
                 user, changeUserPasswordRequestDto.CurrentPassword, changeUserPasswordRequestDto.NewPassword);
@@ -29,7 +30,8 @@ namespace NazarMahal.Infrastructure.Repository
         public async Task<bool> VerifyCurrentPasswordAsync(int userId, string currentPassword)
         {
             var user = await _userManager.FindByIdAsync(userId.ToString());
-            if (user == null) return false;
+            if (user == null)
+                return false;
 
             return await _userManager.CheckPasswordAsync(user, currentPassword);
         }
@@ -37,19 +39,20 @@ namespace NazarMahal.Infrastructure.Repository
         public async Task<IEnumerable<UserResponseDto>> GetAllUsersAsync()
         {
             var users = _userManager.Users.ToList();
-            return users.ToUserResponseDtoList();
+            return users.ToUserResponseDtoList().Where(u => u != null)!;
         }
 
         public async Task<UserResponseDto> GetUserByIdAsync(int userId)
         {
             var user = await _userManager.FindByIdAsync(userId.ToString());
-            return user.ToUserResponseDto();
+            return user.ToUserResponseDto() ?? throw new InvalidOperationException($"User with ID {userId} not found");
         }
 
         public async Task<bool> DisableUserStatusAsync(int userId)
         {
             var user = await _userManager.FindByIdAsync(userId.ToString());
-            if (user == null) return false;
+            if (user == null)
+                return false;
 
             user.IsDisabled = true;
             var result = await _userManager.UpdateAsync(user);
@@ -70,9 +73,15 @@ namespace NazarMahal.Infrastructure.Repository
         public async Task<UserResponseDto> AddUserAsync(CreateNewUserRequestDto createNewUserRequestDto)
         {
             var user = createNewUserRequestDto.ToApplicationUser();
+            if (user == null)
+                throw new InvalidOperationException("Failed to create user from request.");
+
             var result = await _userManager.CreateAsync(user, createNewUserRequestDto.Password);
 
-            return result.Succeeded ? user.ToUserResponseDto() : null;
+            if (!result.Succeeded)
+                throw new InvalidOperationException($"Failed to create user: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+
+            return user.ToUserResponseDto() ?? throw new InvalidOperationException("Failed to map user to response DTO.");
         }
 
         public async Task<UserResponseDto> UpdateUserInfoAsync(int userId, string fullname, string email, string? phoneNumber, string address, bool isDisabled, IFormFile? profilePicture)
@@ -112,13 +121,13 @@ namespace NazarMahal.Infrastructure.Repository
                 throw new InvalidOperationException("Failed to update user.");
             }
 
-            return user.ToUserResponseDto();
+            return user.ToUserResponseDto() ?? throw new InvalidOperationException("Failed to map user to response DTO.");
         }
 
         public async Task<IList<UserResponseDto>> GetUserListByRoleId(string roleName)
         {
             var users = await _userManager.GetUsersInRoleAsync(roleName);
-            return users.ToUserResponseDtoList().ToList();
+            return users.ToUserResponseDtoList().Where(u => u != null).ToList()!;
         }
     }
 }

@@ -115,12 +115,12 @@ namespace NazarMahal.Infrastructure.ReadModelRepository
 
             if (showActiveOnly)
             {
-                queryBuilder.Append(" AND IsActive = 1");
+                _ = queryBuilder.Append(" AND IsActive = 1");
             }
 
             if (categoryId > 0)
             {
-                queryBuilder.Append(" AND CategoryId = @CategoryId");
+                _ = queryBuilder.Append(" AND CategoryId = @CategoryId");
                 parameters.Add("CategoryId", categoryId);
             }
 
@@ -205,7 +205,7 @@ namespace NazarMahal.Infrastructure.ReadModelRepository
             {
                 if (!string.IsNullOrWhiteSpace(value))
                 {
-                    sql.Append($" AND {column} LIKE @{paramName}");
+                    _ = sql.Append($" AND {column} LIKE @{paramName}");
                     parameters.Add(paramName, $"%{value}%");
                 }
             }
@@ -222,30 +222,30 @@ namespace NazarMahal.Infrastructure.ReadModelRepository
             // Add exact match filters
             if (searchGlasses.CategoryId.HasValue && searchGlasses.CategoryId > 0)
             {
-                sql.Append(" AND g.CategoryId = @CategoryId");
+                _ = sql.Append(" AND g.CategoryId = @CategoryId");
                 parameters.Add("CategoryId", searchGlasses.CategoryId);
             }
 
             if (searchGlasses.SubCategoryId.HasValue && searchGlasses.SubCategoryId > 0)
             {
-                sql.Append(" AND g.SubCategoryId = @SubCategoryId");
+                _ = sql.Append(" AND g.SubCategoryId = @SubCategoryId");
                 parameters.Add("SubCategoryId", searchGlasses.SubCategoryId);
             }
 
             if (searchGlasses.IsActive.HasValue)
             {
-                sql.Append(" AND g.IsActive = @IsActive");
+                _ = sql.Append(" AND g.IsActive = @IsActive");
                 parameters.Add("IsActive", searchGlasses.IsActive);
             }
 
             // Add sorting
-            sql.Append(" ORDER BY g.Id DESC");
+            _ = sql.Append(" ORDER BY g.Id DESC");
 
             // Add pagination
             if (searchGlasses.PageSize.HasValue && searchGlasses.PageSize > 0)
             {
                 int offset = (searchGlasses.PageNum - 1) * searchGlasses.PageSize.Value;
-                sql.Append($" OFFSET {offset} ROWS FETCH NEXT {searchGlasses.PageSize} ROWS ONLY");
+                _ = sql.Append($" OFFSET {offset} ROWS FETCH NEXT {searchGlasses.PageSize} ROWS ONLY");
             }
 
             var glassesDictionary = new Dictionary<int, GlassesReadModel>();
@@ -257,7 +257,7 @@ namespace NazarMahal.Infrastructure.ReadModelRepository
                     if (!glassesDictionary.TryGetValue(glasses.GlassesId, out var existing))
                     {
                         existing = glasses;
-                        existing.AttachmentReadModels = new List<GlassesAttachmentReadModel>();
+                        existing.AttachmentReadModels = [];
                         glassesDictionary.Add(existing.GlassesId, existing);
                     }
 

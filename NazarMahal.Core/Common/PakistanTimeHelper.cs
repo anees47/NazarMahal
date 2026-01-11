@@ -1,5 +1,3 @@
-using System;
-
 namespace NazarMahal.Core.Common
 {
     public static class PakistanTimeHelper

@@ -1,5 +1,5 @@
-using NazarMahal.Application.Common;
 using Microsoft.AspNetCore.Mvc;
+using NazarMahal.Application.Common;
 using NazarMahal.Core.ActionResponses;
 
 

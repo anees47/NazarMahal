@@ -14,7 +14,6 @@ namespace NazarMahal.Application.Interfaces.IRepository
         Task<bool> VerifyCurrentPasswordAsync(int userId, string currentPassword);
         Task<UserResponseDto> AddUserAsync(CreateNewUserRequestDto createNewUserRequestDto);
         Task<UserResponseDto> UpdateUserInfoAsync(int userId, string fullname, string email, string? phoneNumber, string address, bool isDisabled, IFormFile? profilePicture);
-
         Task<IList<UserResponseDto>> GetUserListByRoleId(string roleName);
 
     }

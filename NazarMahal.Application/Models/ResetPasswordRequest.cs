@@ -2,10 +2,10 @@ namespace NazarMahal.Application.Models
 {
     public class ResetPasswordRequest
     {
-        public string UserId { get; set; }
-        public string Token { get; set; }
-        public string NewPassword { get; set; }
-        public string ConfirmPassword { get; set; }
+        public required string UserId { get; set; }
+        public required string Token { get; set; }
+        public required string NewPassword { get; set; }
+        public required string ConfirmPassword { get; set; }
     }
 }
 

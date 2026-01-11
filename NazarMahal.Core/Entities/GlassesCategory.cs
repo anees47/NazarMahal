@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace NazarMahal.Core.Entities
@@ -8,9 +8,8 @@ namespace NazarMahal.Core.Entities
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
         public bool IsActive { get; set; }
-
 
         protected GlassesCategory() { }
         protected GlassesCategory(string name, bool isActive)
@@ -22,7 +21,7 @@ namespace NazarMahal.Core.Entities
         {
             return new GlassesCategory(name, isActive);
         }
-        
+
         public void UpdateGlassesCategoryInfo(string name, bool isActive)
         {
             Name = name;

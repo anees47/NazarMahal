@@ -1,163 +1,159 @@
+using Microsoft.Extensions.Configuration;
 using NazarMahal.Application.Interfaces;
-using NazarMahal.Core.Entities;
-using NazarMahal.Core.Enums;
 using NazarMahal.Application.Interfaces.IRepository;
 using NazarMahal.Application.ResponseDto.UserResponseDto;
-using Microsoft.Extensions.Configuration;
+using NazarMahal.Core.Entities;
+using NazarMahal.Core.Enums;
 
-namespace NazarMahal.Infrastructure.Services
+namespace NazarMahal.Infrastructure.Services;
+
+public class NotificationService(IUserRepository userRepository, IEmailService emailService, IConfiguration configuration) : INotificationService
 {
-    public class NotificationService(IUserRepository userRepository, IEmailService emailService, IConfiguration configuration) : INotificationService
+    #region Appointment Emails
+
+    /// <summary>
+    /// Very simple email template for admins when new appointment is created
+    /// </summary>
+    private string GetAdminNewAppointmentTemplate(Appointment appointment, UserResponseDto? user)
     {
-        private readonly IUserRepository _userRepository = userRepository;
-        private readonly IEmailService _emailService = emailService;
-        private readonly IConfiguration _configuration = configuration;
+        var userName = user?.FullName ?? appointment.FullName;
+        var appointmentTypeLabel = FormatAppointmentType(appointment.AppointmentType);
+        var frontendUrl = configuration["FrontendUrl"] ?? "http://localhost:4200";
+        var manageAppointmentsUrl = $"{frontendUrl}/admin/appointments";
 
-        #region Appointment Emails
+        return $@"
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset='UTF-8'>
+                    <style>
+                        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; }}
+                        .container {{ max-width: 500px; margin: 0 auto; background: #f5f5f5; padding: 20px; border-radius: 8px; }}
+                        .content {{ background: white; padding: 20px; border-radius: 5px; }}
+                        .button {{ display: inline-block; background: #667eea; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 15px; }}
+                    </style>
+                </head>
+                <body>
+                    <div class='container'>
+                        <div class='content'>
+                            <p><strong>New Appointment Scheduled</strong></p>
+                            <p>{userName} - {appointmentTypeLabel}</p>
+                            <p>{appointment.AppointmentDate:MMM dd, yyyy} at {FormatTime(appointment.AppointmentTime)}</p>
+                            <a href='{manageAppointmentsUrl}' class='button'>Manage Appointments</a>
+                        </div>
+                    </div>
+                </body>
+                </html>";
+    }
 
-        /// <summary>
-        /// Very simple email template for admins when new appointment is created
-        /// </summary>
-        private string GetAdminNewAppointmentTemplate(Appointment appointment, UserResponseDto? user)
+    /// <summary>
+    /// Send when customer books an appointment (Status: Scheduled)
+    /// Sends separate simple email to admins and detailed email to customer
+    /// </summary>
+    public async Task SendAppointmentScheduledEmail(Appointment appointment)
+    {
+        var user = await userRepository.GetUserByIdAsync(appointment.UserId);
+        var userEmail = user != null ? user.Email : appointment.Email;
+        var adminList = await userRepository.GetUserListByRoleId(RoleEnum.Admin.ToString());
+
+        // Send simple email to admins
+        if (adminList != null && adminList.Any())
         {
-            var userName = user?.FullName ?? appointment.FullName;
-            var appointmentTypeLabel = FormatAppointmentType(appointment.AppointmentType);
-            var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:4200";
-            var manageAppointmentsUrl = $"{frontendUrl}/admin/appointments";
-
-            return $@"
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset='UTF-8'>
-    <style>
-        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; }}
-        .container {{ max-width: 500px; margin: 0 auto; background: #f5f5f5; padding: 20px; border-radius: 8px; }}
-        .content {{ background: white; padding: 20px; border-radius: 5px; }}
-        .button {{ display: inline-block; background: #667eea; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 15px; }}
-    </style>
-</head>
-<body>
-    <div class='container'>
-        <div class='content'>
-            <p><strong>New Appointment Scheduled</strong></p>
-            <p>{userName} - {appointmentTypeLabel}</p>
-            <p>{appointment.AppointmentDate:MMM dd, yyyy} at {FormatTime(appointment.AppointmentTime)}</p>
-            <a href='{manageAppointmentsUrl}' class='button'>Manage Appointments</a>
-        </div>
-    </div>
-</body>
-</html>";
+            var adminEmailMessage = GetAdminNewAppointmentTemplate(appointment, user);
+            var adminEmails = adminList.Select(u => u.Email).Where(e => !string.IsNullOrWhiteSpace(e)).ToList();
+            await emailService.SendEmailDirectlyAsync(adminEmails, "New Appointment - Nazar Mahal", adminEmailMessage);
         }
 
-        /// <summary>
-        /// Send when customer books an appointment (Status: Scheduled)
-        /// Sends separate simple email to admins and detailed email to customer
-        /// </summary>
-        public async Task SendAppointmentScheduledEmail(Appointment appointment)
+        // Send detailed email to customer
+        var customerEmailMessage = GetAppointmentScheduledTemplate(appointment, user);
+        await emailService.SendEmailDirectlyAsync([userEmail], "Appointment Scheduled - Nazar Mahal", customerEmailMessage);
+    }
+
+    /// <summary>
+    /// Send when admin changes status from Scheduled to Confirmed
+    /// Notifies customer that their appointment is CONFIRMED
+    /// </summary>
+    public async Task SendAppointmentConfirmedEmail(Appointment appointment)
+    {
+        var user = await userRepository.GetUserByIdAsync(appointment.UserId);
+        var userEmail = user != null ? user.Email : appointment.Email;
+
+        var emailMessage = GetAppointmentConfirmedTemplate(appointment, user);
+
+        // Only send to customer (admins already know they confirmed it)
+        await emailService.SendEmailDirectlyAsync([userEmail], "Appointment Confirmed - Nazar Mahal", emailMessage);
+    }
+
+    /// <summary>
+    /// Legacy method - redirects to SendAppointmentScheduledEmail
+    /// </summary>
+    public async Task SendAppointmentConfirmationEmail(Appointment appointment)
+    {
+        await SendAppointmentScheduledEmail(appointment);
+    }
+
+    public async Task SendAppointmentCancellationEmail(Appointment appointment)
+    {
+        var user = await userRepository.GetUserByIdAsync(appointment.UserId);
+        var userEmail = user != null ? user.Email : appointment.Email;
+
+        // Only send to customer (admin already knows they cancelled it)
+        var emailMessage = GetAppointmentCancellationTemplate(appointment, user);
+        await emailService.SendEmailDirectlyAsync([userEmail], "Appointment Cancelled - Nazar Mahal", emailMessage);
+    }
+
+    public async Task SendAppointmentCompletionEmail(Appointment appointment)
+    {
+        var user = await userRepository.GetUserByIdAsync(appointment.UserId);
+        var userEmail = user != null ? user.Email : appointment.Email;
+
+        // Only send to customer (admin already knows they marked it complete)
+        var emailMessage = GetAppointmentCompletionTemplate(appointment, user);
+        await emailService.SendEmailDirectlyAsync([userEmail], "Appointment Completed - Nazar Mahal", emailMessage);
+    }
+
+    public async Task SendAppointmentUpdateConfirmationEmail(Appointment appointment)
+    {
+        var user = await userRepository.GetUserByIdAsync(appointment.UserId);
+        var userEmail = user != null ? user.Email : appointment.Email;
+
+        // Only send to customer (admin already knows they updated it)
+        var emailMessage = GetAppointmentUpdateTemplate(appointment, user);
+        await emailService.SendEmailDirectlyAsync([userEmail], "Appointment Updated - Nazar Mahal", emailMessage);
+    }
+
+    public async Task SendAppointmentReminderEmail(Appointment appointment)
+    {
+        var user = await userRepository.GetUserByIdAsync(appointment.UserId);
+        var userEmail = user != null ? user.Email : appointment.Email;
+
+        var emailMessage = GetAppointmentReminderTemplate(appointment, user);
+        await emailService.SendEmailDirectlyAsync([userEmail], "Appointment Reminder - Nazar Mahal", emailMessage);
+    }
+
+    #endregion
+
+    #region Order Emails
+
+    public async Task SendOrderConfirmationEmail(string userEmail, string orderNumber, decimal amount)
+    {
+        var emailMessage = GetOrderConfirmationTemplate(orderNumber, amount);
+        await emailService.SendEmailDirectlyAsync([userEmail], "Order Confirmation - Nazar Mahal", emailMessage);
+    }
+
+    public async Task SendAdminNewOrderEmail(string orderNumber, decimal amount, string userEmail, string phoneNumber)
+    {
+        var adminUsers = await userRepository.GetUserListByRoleId(RoleEnum.Admin.ToString());
+        var recipients = adminUsers?.Select(u => u.Email).Where(e => !string.IsNullOrWhiteSpace(e)).ToList() ?? [];
+        if (!recipients.Any())
         {
-            var user = await _userRepository.GetUserByIdAsync(appointment.UserId);
-            var userEmail = user != null ? user.Email : appointment.Email;
-            var adminList = await _userRepository.GetUserListByRoleId(RoleEnum.Admin.ToString());
-
-            // Send simple email to admins
-            if (adminList != null && adminList.Any())
-            {
-                var adminEmailMessage = GetAdminNewAppointmentTemplate(appointment, user);
-                var adminEmails = adminList.Select(u => u.Email).Where(e => !string.IsNullOrWhiteSpace(e)).ToList();
-                await _emailService.SendEmailDirectlyAsync(adminEmails, "New Appointment - Nazar Mahal", adminEmailMessage);
-            }
-
-            // Send detailed email to customer
-            var customerEmailMessage = GetAppointmentScheduledTemplate(appointment, user);
-            await _emailService.SendEmailDirectlyAsync(new List<string> { userEmail }, "Appointment Scheduled - Nazar Mahal", customerEmailMessage);
+            recipients.Add("support@nazarmahal.com");
         }
 
-        /// <summary>
-        /// Send when admin changes status from Scheduled to Confirmed
-        /// Notifies customer that their appointment is CONFIRMED
-        /// </summary>
-        public async Task SendAppointmentConfirmedEmail(Appointment appointment)
-        {
-            var user = await _userRepository.GetUserByIdAsync(appointment.UserId);
-            var userEmail = user != null ? user.Email : appointment.Email;
+        var frontendUrl = configuration["FrontendUrl"] ?? "http://localhost:4200";
+        var manageOrdersUrl = $"{frontendUrl}/admin/orders";
 
-            var emailMessage = GetAppointmentConfirmedTemplate(appointment, user);
-
-            // Only send to customer (admins already know they confirmed it)
-            await _emailService.SendEmailDirectlyAsync(new List<string> { userEmail }, "Appointment Confirmed - Nazar Mahal", emailMessage);
-        }
-
-        /// <summary>
-        /// Legacy method - redirects to SendAppointmentScheduledEmail
-        /// </summary>
-        public async Task SendAppointmentConfirmationEmail(Appointment appointment)
-        {
-            await SendAppointmentScheduledEmail(appointment);
-        }
-
-        public async Task SendAppointmentCancellationEmail(Appointment appointment)
-        {
-            var user = await _userRepository.GetUserByIdAsync(appointment.UserId);
-            var userEmail = user != null ? user.Email : appointment.Email;
-
-            // Only send to customer (admin already knows they cancelled it)
-            var emailMessage = GetAppointmentCancellationTemplate(appointment, user);
-            await _emailService.SendEmailDirectlyAsync(new List<string> { userEmail }, "Appointment Cancelled - Nazar Mahal", emailMessage);
-        }
-
-        public async Task SendAppointmentCompletionEmail(Appointment appointment)
-        {
-            var user = await _userRepository.GetUserByIdAsync(appointment.UserId);
-            var userEmail = user != null ? user.Email : appointment.Email;
-
-            // Only send to customer (admin already knows they marked it complete)
-            var emailMessage = GetAppointmentCompletionTemplate(appointment, user);
-            await _emailService.SendEmailDirectlyAsync(new List<string> { userEmail }, "Appointment Completed - Nazar Mahal", emailMessage);
-        }
-
-        public async Task SendAppointmentUpdateConfirmationEmail(Appointment appointment)
-        {
-            var user = await _userRepository.GetUserByIdAsync(appointment.UserId);
-            var userEmail = user != null ? user.Email : appointment.Email;
-
-            // Only send to customer (admin already knows they updated it)
-            var emailMessage = GetAppointmentUpdateTemplate(appointment, user);
-            await _emailService.SendEmailDirectlyAsync(new List<string> { userEmail }, "Appointment Updated - Nazar Mahal", emailMessage);
-        }
-
-        public async Task SendAppointmentReminderEmail(Appointment appointment)
-        {
-            var user = await _userRepository.GetUserByIdAsync(appointment.UserId);
-            var userEmail = user != null ? user.Email : appointment.Email;
-
-            var emailMessage = GetAppointmentReminderTemplate(appointment, user);
-            await _emailService.SendEmailDirectlyAsync(new List<string> { userEmail }, "Appointment Reminder - Nazar Mahal", emailMessage);
-        }
-
-        #endregion
-
-        #region Order Emails
-
-        public async Task SendOrderConfirmationEmail(string userEmail, string orderNumber, decimal amount)
-        {
-            var emailMessage = GetOrderConfirmationTemplate(orderNumber, amount);
-            await _emailService.SendEmailDirectlyAsync(new List<string> { userEmail }, "Order Confirmation - Nazar Mahal", emailMessage);
-        }
-
-        public async Task SendAdminNewOrderEmail(string orderNumber, decimal amount, string userEmail, string phoneNumber)
-        {
-            var adminUsers = await _userRepository.GetUserListByRoleId(RoleEnum.Admin.ToString());
-            var recipients = adminUsers?.Select(u => u.Email).Where(e => !string.IsNullOrWhiteSpace(e)).ToList() ?? new List<string>();
-            if (!recipients.Any())
-            {
-                recipients.Add("support@nazarmahal.com");
-            }
-
-            var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:4200";
-            var manageOrdersUrl = $"{frontendUrl}/admin/orders";
-
-            var body = $@"
+        var body = $@"
 <!DOCTYPE html>
 <html>
 <head>
@@ -182,87 +178,90 @@ namespace NazarMahal.Infrastructure.Services
     </div>
 </body>
 </html>";
-            await _emailService.SendEmailDirectlyAsync(recipients, $"New Order - {orderNumber}", body);
-        }
+        await emailService.SendEmailDirectlyAsync(recipients, $"New Order - {orderNumber}", body);
+    }
 
-        public async Task SendOrderStatusUpdateEmail(string userEmail, string orderNumber, string status)
+    public async Task SendOrderStatusUpdateEmail(string userEmail, string orderNumber, string status)
+    {
+        var emailMessage = GetOrderStatusUpdateTemplate(orderNumber, status);
+        await emailService.SendEmailDirectlyAsync([userEmail], $"Order {status} - Nazar Mahal", emailMessage);
+    }
+
+    public async Task SendOrderCancellationEmail(string userEmail, string orderNumber, decimal refundAmount)
+    {
+        var emailMessage = GetOrderCancellationTemplate(orderNumber, refundAmount);
+        await emailService.SendEmailDirectlyAsync([userEmail], "Order Cancelled - Nazar Mahal", emailMessage);
+    }
+
+    #endregion
+
+    #region Account Emails
+
+    public async Task SendAccountConfirmationEmail(List<string> toEmails, string confirmationLink)
+    {
+        var emailMessage = GetAccountConfirmationTemplate(confirmationLink);
+        await emailService.SendEmailDirectlyAsync(toEmails, "Confirm Your Email - Nazar Mahal", emailMessage);
+    }
+
+    public async Task SendPasswordResetEmail(string userEmail, string resetLink, string userName)
+    {
+        var emailMessage = GetPasswordResetTemplate(resetLink, userName);
+        await emailService.SendEmailDirectlyAsync([userEmail], "Password Reset Request - Nazar Mahal", emailMessage);
+    }
+
+    public async Task SendPasswordResetConfirmationEmail(string userEmail)
+    {
+        var emailMessage = GetPasswordResetConfirmationTemplate();
+        await emailService.SendEmailDirectlyAsync([userEmail], "Password Reset Successful - Nazar Mahal", emailMessage);
+    }
+
+    public async Task SendWelcomeEmail(string userEmail, string userName)
+    {
+        var emailMessage = GetWelcomeEmailTemplate(userName);
+        await emailService.SendEmailDirectlyAsync([userEmail], "Welcome to Nazar Mahal", emailMessage);
+    }
+
+    #endregion
+
+    #region Email Templates
+
+    // Helper method to format TimeSpan to 12-hour format
+    private string FormatTime(TimeSpan time)
+    {
+        var hours = time.Hours;
+        var minutes = time.Minutes;
+        var period = hours >= 12 ? "PM" : "AM";
+        var displayHours = hours > 12 ? hours - 12 : (hours == 0 ? 12 : hours);
+        return $"{displayHours:D2}:{minutes:D2} {period}";
+    }
+
+    // Helper method to format appointment type enum to user-friendly string
+    private string FormatAppointmentType(AppointmentEnums.AppointmentType type)
+    {
+        return type switch
         {
-            var emailMessage = GetOrderStatusUpdateTemplate(orderNumber, status);
-            await _emailService.SendEmailDirectlyAsync(new List<string> { userEmail }, $"Order {status} - Nazar Mahal", emailMessage);
-        }
+            AppointmentEnums.AppointmentType.Consultation => "Consultation",
+            AppointmentEnums.AppointmentType.FollowUp => "Follow Up",
+            AppointmentEnums.AppointmentType.Checkup => "Checkup",
+            _ => "Consultation"
+        };
+    }
 
-        public async Task SendOrderCancellationEmail(string userEmail, string orderNumber, decimal refundAmount)
-        {
-            var emailMessage = GetOrderCancellationTemplate(orderNumber, refundAmount);
-            await _emailService.SendEmailDirectlyAsync(new List<string> { userEmail }, "Order Cancelled - Nazar Mahal", emailMessage);
-        }
+    /// <summary>
+    /// Email template sent when customer BOOKS an appointment (Status: Scheduled)
+    /// Tells customer to wait for admin confirmation
+    /// </summary>
+    private string GetAppointmentScheduledTemplate(Appointment appointment, UserResponseDto? user)
+    {
+        var userName = user?.FullName ?? appointment.FullName;
 
-        #endregion
+        _ = user?.Email ?? appointment.Email;
 
-        #region Account Emails
+        _ = appointment.PhoneNumber;
 
-        public async Task SendAccountConfirmationEmail(List<string> toEmails, string confirmationLink)
-        {
-            var emailMessage = GetAccountConfirmationTemplate(confirmationLink);
-            await _emailService.SendEmailDirectlyAsync(toEmails, "Confirm Your Email - Nazar Mahal", emailMessage);
-        }
+        _ = FormatAppointmentType(appointment.AppointmentType);
 
-        public async Task SendPasswordResetEmail(string userEmail, string resetLink, string userName)
-        {
-            var emailMessage = GetPasswordResetTemplate(resetLink, userName);
-            await _emailService.SendEmailDirectlyAsync(new List<string> { userEmail }, "Password Reset Request - Nazar Mahal", emailMessage);
-        }
-
-        public async Task SendPasswordResetConfirmationEmail(string userEmail)
-        {
-            var emailMessage = GetPasswordResetConfirmationTemplate();
-            await _emailService.SendEmailDirectlyAsync(new List<string> { userEmail }, "Password Reset Successful - Nazar Mahal", emailMessage);
-        }
-
-        public async Task SendWelcomeEmail(string userEmail, string userName)
-        {
-            var emailMessage = GetWelcomeEmailTemplate(userName);
-            await _emailService.SendEmailDirectlyAsync(new List<string> { userEmail }, "Welcome to Nazar Mahal", emailMessage);
-        }
-
-        #endregion
-
-        #region Email Templates
-
-        // Helper method to format TimeSpan to 12-hour format
-        private string FormatTime(TimeSpan time)
-        {
-            var hours = time.Hours;
-            var minutes = time.Minutes;
-            var period = hours >= 12 ? "PM" : "AM";
-            var displayHours = hours > 12 ? hours - 12 : (hours == 0 ? 12 : hours);
-            return $"{displayHours:D2}:{minutes:D2} {period}";
-        }
-
-        // Helper method to format appointment type enum to user-friendly string
-        private string FormatAppointmentType(AppointmentEnums.AppointmentType type)
-        {
-            return type switch
-            {
-                AppointmentEnums.AppointmentType.Consultation => "Consultation",
-                AppointmentEnums.AppointmentType.FollowUp => "Follow Up",
-                AppointmentEnums.AppointmentType.Checkup => "Checkup",
-                _ => "Consultation"
-            };
-        }
-
-        /// <summary>
-        /// Email template sent when customer BOOKS an appointment (Status: Scheduled)
-        /// Tells customer to wait for admin confirmation
-        /// </summary>
-        private string GetAppointmentScheduledTemplate(Appointment appointment, UserResponseDto? user)
-        {
-            var userName = user?.FullName ?? appointment.FullName;
-            var userEmail = user?.Email ?? appointment.Email;
-            var userPhone = appointment.PhoneNumber;
-            var appointmentTypeLabel = FormatAppointmentType(appointment.AppointmentType);
-
-            return $@"
+        return $@"
 <!DOCTYPE html>
 <html>
 <head>
@@ -348,18 +347,18 @@ namespace NazarMahal.Infrastructure.Services
     </div>
 </body>
 </html>";
-        }
+    }
 
-        /// <summary>
-        /// Email template sent when admin CONFIRMS an appointment (Status: Confirmed)
-        /// Assures customer their appointment is confirmed and ready
-        /// </summary>
-        private string GetAppointmentConfirmedTemplate(Appointment appointment, UserResponseDto? user)
-        {
-            var userName = user?.FullName ?? appointment.FullName;
-            var appointmentTypeLabel = FormatAppointmentType(appointment.AppointmentType);
+    /// <summary>
+    /// Email template sent when admin CONFIRMS an appointment (Status: Confirmed)
+    /// Assures customer their appointment is confirmed and ready
+    /// </summary>
+    private string GetAppointmentConfirmedTemplate(Appointment appointment, UserResponseDto? user)
+    {
+        var userName = user?.FullName ?? appointment.FullName;
+        var appointmentTypeLabel = FormatAppointmentType(appointment.AppointmentType);
 
-            return $@"
+        return $@"
 <!DOCTYPE html>
 <html>
 <head>
@@ -448,14 +447,14 @@ namespace NazarMahal.Infrastructure.Services
     </div>
 </body>
 </html>";
-        }
+    }
 
-        private string GetAppointmentCancellationTemplate(Appointment appointment, UserResponseDto? user)
-        {
-            var userName = user?.FullName ?? appointment.FullName;
-            var appointmentTypeLabel = FormatAppointmentType(appointment.AppointmentType);
+    private string GetAppointmentCancellationTemplate(Appointment appointment, UserResponseDto? user)
+    {
+        var userName = user?.FullName ?? appointment.FullName;
+        var appointmentTypeLabel = FormatAppointmentType(appointment.AppointmentType);
 
-            return $@"
+        return $@"
 <!DOCTYPE html>
 <html>
 <head>
@@ -527,14 +526,14 @@ namespace NazarMahal.Infrastructure.Services
     </div>
 </body>
 </html>";
-        }
+    }
 
-        private string GetAppointmentCompletionTemplate(Appointment appointment, UserResponseDto? user)
-        {
-            var userName = user?.FullName ?? appointment.FullName;
-            var appointmentTypeLabel = FormatAppointmentType(appointment.AppointmentType);
+    private string GetAppointmentCompletionTemplate(Appointment appointment, UserResponseDto? user)
+    {
+        var userName = user?.FullName ?? appointment.FullName;
+        var appointmentTypeLabel = FormatAppointmentType(appointment.AppointmentType);
 
-            return $@"
+        return $@"
 <!DOCTYPE html>
 <html>
 <head>
@@ -611,14 +610,14 @@ namespace NazarMahal.Infrastructure.Services
     </div>
 </body>
 </html>";
-        }
+    }
 
-        private string GetAppointmentUpdateTemplate(Appointment appointment, UserResponseDto? user)
-        {
-            var userName = user?.FullName ?? appointment.FullName;
-            var appointmentTypeLabel = FormatAppointmentType(appointment.AppointmentType);
+    private string GetAppointmentUpdateTemplate(Appointment appointment, UserResponseDto? user)
+    {
+        var userName = user?.FullName ?? appointment.FullName;
+        var appointmentTypeLabel = FormatAppointmentType(appointment.AppointmentType);
 
-            return $@"
+        return $@"
 <!DOCTYPE html>
 <html>
 <head>
@@ -684,13 +683,13 @@ namespace NazarMahal.Infrastructure.Services
     </div>
 </body>
 </html>";
-        }
+    }
 
-        private string GetAppointmentReminderTemplate(Appointment appointment, UserResponseDto? user)
-        {
-            var userName = user?.FullName ?? appointment.FullName;
+    private string GetAppointmentReminderTemplate(Appointment appointment, UserResponseDto? user)
+    {
+        var userName = user?.FullName ?? appointment.FullName;
 
-            return $@"
+        return $@"
 <!DOCTYPE html>
 <html>
 <head>
@@ -761,11 +760,11 @@ namespace NazarMahal.Infrastructure.Services
     </div>
 </body>
 </html>";
-        }
+    }
 
-        private string GetOrderConfirmationTemplate(string orderNumber, decimal amount)
-        {
-            return $@"
+    private string GetOrderConfirmationTemplate(string orderNumber, decimal amount)
+    {
+        return $@"
 <!DOCTYPE html>
 <html>
 <head>
@@ -836,11 +835,11 @@ namespace NazarMahal.Infrastructure.Services
     </div>
 </body>
 </html>";
-        }
+    }
 
-        private string GetOrderStatusUpdateTemplate(string orderNumber, string status)
-        {
-            return $@"
+    private string GetOrderStatusUpdateTemplate(string orderNumber, string status)
+    {
+        return $@"
 <!DOCTYPE html>
 <html>
 <head>
@@ -902,11 +901,11 @@ namespace NazarMahal.Infrastructure.Services
     </div>
 </body>
 </html>";
-        }
+    }
 
-        private string GetOrderCancellationTemplate(string orderNumber, decimal refundAmount)
-        {
-            return $@"
+    private string GetOrderCancellationTemplate(string orderNumber, decimal refundAmount)
+    {
+        return $@"
 <!DOCTYPE html>
 <html>
 <head>
@@ -973,11 +972,11 @@ namespace NazarMahal.Infrastructure.Services
     </div>
 </body>
 </html>";
-        }
+    }
 
-        private string GetAccountConfirmationTemplate(string confirmationLink)
-        {
-            return $@"
+    private string GetAccountConfirmationTemplate(string confirmationLink)
+    {
+        return $@"
 <!DOCTYPE html>
 <html>
 <head>
@@ -1031,11 +1030,11 @@ namespace NazarMahal.Infrastructure.Services
     </div>
 </body>
 </html>";
-        }
+    }
 
-        private string GetPasswordResetTemplate(string resetLink, string userName)
-        {
-            return $@"
+    private string GetPasswordResetTemplate(string resetLink, string userName)
+    {
+        return $@"
 <!DOCTYPE html>
 <html>
 <head>
@@ -1088,11 +1087,11 @@ namespace NazarMahal.Infrastructure.Services
     </div>
 </body>
 </html>";
-        }
+    }
 
-        private string GetPasswordResetConfirmationTemplate()
-        {
-            return $@"
+    private string GetPasswordResetConfirmationTemplate()
+    {
+        return $@"
 <!DOCTYPE html>
 <html>
 <head>
@@ -1143,11 +1142,11 @@ namespace NazarMahal.Infrastructure.Services
     </div>
 </body>
 </html>";
-        }
+    }
 
-        private string GetWelcomeEmailTemplate(string userName)
-        {
-            return $@"
+    private string GetWelcomeEmailTemplate(string userName)
+    {
+        return $@"
 <!DOCTYPE html>
 <html>
 <head>
@@ -1200,8 +1199,7 @@ namespace NazarMahal.Infrastructure.Services
     </div>
 </body>
 </html>";
-        }
-
-        #endregion
     }
+
+    #endregion
 }

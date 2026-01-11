@@ -5,7 +5,7 @@ namespace NazarMahal.Core.Entities
     public class Glasses
     {
         public int Id { get; set; }
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
         public decimal Price { get; set; }
         public string? Brand { get; set; }
@@ -20,10 +20,10 @@ namespace NazarMahal.Core.Entities
 
 
         [JsonIgnore]
-        public ICollection<Order> Orders { get; set; } = new List<Order>();
+        public ICollection<Order> Orders { get; set; } = [];
 
         [JsonIgnore]
-        public ICollection<GlassesAttachment> Attachments { get; set; } = new List<GlassesAttachment>();
+        public ICollection<GlassesAttachment> Attachments { get; set; } = [];
 
         public Glasses()
         {
@@ -45,11 +45,11 @@ namespace NazarMahal.Core.Entities
             AvailableQuantity = availableQuantity;
         }
 
-        public static Glasses Create(string name, string? description, decimal price, string model, string? brand, string? lensType, string? frameType, string? color, int categoryId, int subCategoryId, bool isActive, int availableQuantity)
+        public static Glasses Create(string name, string? description, decimal price, string? model, string? brand, string? lensType, string? frameType, string? color, int categoryId, int subCategoryId, bool isActive, int availableQuantity)
         {
             return new Glasses(name, description, price, brand, model, frameType, lensType, color, categoryId, subCategoryId, isActive, availableQuantity);
         }
-        
+
         public void UpdateGlassesInfo(string name, string? description, decimal price,
             string? brand, string? model, string? frameType, string? lensType, string? color, int categoryId, int subCategoryId, bool isActive, int availableQuantity)
         {
@@ -66,7 +66,7 @@ namespace NazarMahal.Core.Entities
             IsActive = isActive;
             AvailableQuantity = availableQuantity;
         }
-        
+
         public void SoftDeleteGlasses()
         {
             IsActive = false;

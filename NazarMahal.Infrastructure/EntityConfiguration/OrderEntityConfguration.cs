@@ -1,55 +1,56 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using NazarMahal.Core.Entities;
+using NazarMahal.Infrastructure.Data;
 
-namespace NazarMahal.Infrastructure.Data.Configurations;
+namespace NazarMahal.Infrastructure.EntityConfiguration;
 
 public class OrderEntityConfiguration : IEntityTypeConfiguration<Order>
 {
     public void Configure(EntityTypeBuilder<Order> builder)
     {
-        builder.ToTable("Orders");
+        _ = builder.ToTable("Orders");
 
-        builder.HasKey(o => o.OrderId);
+        _ = builder.HasKey(o => o.OrderId);
 
-        builder.Property(o => o.OrderNumber)
+        _ = builder.Property(o => o.OrderNumber)
             .HasMaxLength(50)
             .IsRequired();
 
-        builder.Property(o => o.OrderCreatedDate)
+        _ = builder.Property(o => o.OrderCreatedDate)
             .IsRequired();
 
-        builder.Property(o => o.OrderCreatedTime)
+        _ = builder.Property(o => o.OrderCreatedTime)
             .IsRequired();
 
-        builder.Property(o => o.FirstName)
+        _ = builder.Property(o => o.FirstName)
            .HasMaxLength(100);
 
-        builder.Property(o => o.LastName)
+        _ = builder.Property(o => o.LastName)
             .HasMaxLength(100);
 
-        builder.Property(o => o.TotalAmount)
+        _ = builder.Property(o => o.TotalAmount)
             .HasColumnType("decimal(18,2)")
             .IsRequired();
 
-        builder.Property(o => o.PhoneNumber)
+        _ = builder.Property(o => o.PhoneNumber)
             .HasMaxLength(20);
 
-        builder.Property(o => o.UserEmail)
+        _ = builder.Property(o => o.UserEmail)
             .HasMaxLength(100);
 
-        builder.Property(o => o.OrderStatus)
+        _ = builder.Property(o => o.OrderStatus)
             .IsRequired();
 
-        builder.Property(o => o.PaymentMethod)
+        _ = builder.Property(o => o.PaymentMethod)
             .HasMaxLength(50);
 
-        builder.HasOne<ApplicationUser>()
+        _ = builder.HasOne<ApplicationUser>()
             .WithMany(u => u.Orders)
             .HasForeignKey(o => o.UserId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasMany(o => o.OrderItems)
+        _ = builder.HasMany(o => o.OrderItems)
             .WithOne(oi => oi.Order)
             .HasForeignKey(oi => oi.OrderId)
             .OnDelete(DeleteBehavior.Cascade);

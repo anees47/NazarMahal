@@ -13,7 +13,8 @@ namespace NazarMahal.Application.Mappers
         /// </summary>
         public static AppointmentDto ToAppointmentDto(this Appointment appointment)
         {
-            if (appointment == null) return null;
+            if (appointment == null)
+                return null;
 
             return new AppointmentDto
             {
@@ -37,7 +38,8 @@ namespace NazarMahal.Application.Mappers
         /// </summary>
         public static List<AppointmentDto> ToAppointmentDtoList(this IEnumerable<Appointment> appointments)
         {
-            if (appointments == null) return new List<AppointmentDto>();
+            if (appointments == null)
+                return [];
             return appointments.Select(a => a.ToAppointmentDto()).ToList();
         }
     }

@@ -7,18 +7,18 @@ namespace NazarMahal.Core.ActionResponses
 
         public OkActionResponse()
         {
-            SetDefault(default);
+            SetDefault(default!);
         }
 
-        public OkActionResponse(string message) : this(default, message)
+        public OkActionResponse(string message) : this(default!, message)
         {
         }
 
-        public OkActionResponse(List<string> messages) : this(default, messages)
+        public OkActionResponse(List<string> messages) : this(default!, messages)
         {
         }
 
-        public OkActionResponse(T payload, string message = null)
+        public OkActionResponse(T payload, string? message = null)
         {
             Message = message;
             SetDefault(payload);

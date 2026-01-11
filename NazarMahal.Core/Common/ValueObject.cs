@@ -1,4 +1,4 @@
-﻿namespace NazarMahal.Core.Common
+namespace NazarMahal.Core.Common
 {
     public abstract class ValueObject
     {
@@ -24,17 +24,17 @@
                 {
                     unchecked
                     {
-                        return current * 23 + (obj?.GetHashCode() ?? 0);
+                        return (current * 23) + (obj?.GetHashCode() ?? 0);
                     }
                 });
         }
 
         public static bool operator ==(ValueObject a, ValueObject b)
         {
-            if (ReferenceEquals(a, null) && ReferenceEquals(b, null))
+            if (a is null && b is null)
                 return true;
 
-            if (ReferenceEquals(a, null) || ReferenceEquals(b, null))
+            if (a is null || b is null)
                 return false;
 
             return a.Equals(b);

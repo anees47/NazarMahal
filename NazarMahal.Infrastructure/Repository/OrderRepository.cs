@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using NazarMahal.Application.Interfaces.IRepository;
 using NazarMahal.Core.Common;
-using NazarMahal.Infrastructure.Data;
 using NazarMahal.Core.Entities;
 using NazarMahal.Core.Enums;
-using NazarMahal.Application.Interfaces.IRepository;
+using NazarMahal.Infrastructure.Data;
 
 namespace NazarMahal.Infrastructure.Repository
 {
@@ -17,8 +17,8 @@ namespace NazarMahal.Infrastructure.Repository
 
             order.OrderCreatedDate = DateOnly.FromDateTime(pakistanDateTime);
             order.OrderCreatedTime = TimeOnly.FromDateTime(pakistanDateTime);
-            await _dbContext.Orders.AddAsync(order);
-            await _dbContext.SaveChangesAsync();
+            _ = await _dbContext.Orders.AddAsync(order);
+            _ = await _dbContext.SaveChangesAsync();
             return order;
         }
 
@@ -92,7 +92,7 @@ namespace NazarMahal.Infrastructure.Repository
         {
             var order = await GetOrderByOrderId(orderId);
             order.OrderStatus = OrderStatus.Cancelled;
-            await _dbContext.SaveChangesAsync();
+            _ = await _dbContext.SaveChangesAsync();
             return true;
         }
 
@@ -100,7 +100,7 @@ namespace NazarMahal.Infrastructure.Repository
         {
             var order = await GetOrderByOrderId(orderId);
             order.OrderStatus = newStatus;
-            await _dbContext.SaveChangesAsync();
+            _ = await _dbContext.SaveChangesAsync();
             return true;
         }
 
@@ -115,7 +115,7 @@ namespace NazarMahal.Infrastructure.Repository
 
         public async Task CompleteAsync()
         {
-            await _dbContext.SaveChangesAsync();
+            _ = await _dbContext.SaveChangesAsync();
         }
     }
 }

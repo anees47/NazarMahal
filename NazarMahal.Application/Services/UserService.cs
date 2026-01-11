@@ -1,7 +1,5 @@
 using NazarMahal.Application.Interfaces;
 using NazarMahal.Application.Interfaces.IRepository;
-using NazarMahal.Application.Mappers;
-using NazarMahal.Application.Models;
 using NazarMahal.Application.RequestDto.UserRequestDto;
 using NazarMahal.Application.ResponseDto.UserResponseDto;
 using NazarMahal.Core.ActionResponses;
@@ -20,7 +18,8 @@ namespace NazarMahal.Application.Services
                     return new FailActionResponse<UserResponseDto>("Invalid user ID. User ID must be greater than 0.");
 
                 var user = await _userRepository.GetUserByIdAsync(userId);
-                if (user == null) return new NotFoundActionResponse<UserResponseDto>("User not found");
+                if (user == null)
+                    return new NotFoundActionResponse<UserResponseDto>("User not found");
 
                 return new OkActionResponse<UserResponseDto>(user);
             }
@@ -41,10 +40,11 @@ namespace NazarMahal.Application.Services
                 var userList = users.Select(u => new UserListResponseDto
                 {
                     UserId = u.Id.ToString(),
-                    FullName = u.FullName,
-                    Email = u.Email,
-                    PhoneNumber = u.PhoneNumber,
+                    FullName = u.FullName ?? string.Empty,
+                    Email = u.Email ?? string.Empty,
+                    PhoneNumber = u.PhoneNumber ?? string.Empty,
                     Address = u.Address,
+                    UserType = u.UserType ?? string.Empty,
                     IsEmailConfirmed = true,
                     IsDisabled = u.IsDisabled,
                     DateCreated = u.DateCreated
@@ -69,7 +69,8 @@ namespace NazarMahal.Application.Services
                     return new FailActionResponse<bool>("Request body cannot be null.");
 
                 var user = await _userRepository.GetUserByIdAsync(userId);
-                if (user == null) return new NotFoundActionResponse<bool>("Requested user is not found");
+                if (user == null)
+                    return new NotFoundActionResponse<bool>("Requested user is not found");
 
                 if (changePasswordRequest.NewPassword != changePasswordRequest.ConfirmPassword)
                     return new FailActionResponse<bool>(false, "New Password and confirm password do not match");
@@ -98,8 +99,9 @@ namespace NazarMahal.Application.Services
                     return new FailActionResponse<bool>("Invalid user ID. User ID must be greater than 0.");
 
                 var user = await _userRepository.GetUserByIdAsync(userId);
-                if (user == null) return new NotFoundActionResponse<bool>("User not found");
-                if(user.IsDisabled)
+                if (user == null)
+                    return new NotFoundActionResponse<bool>("User not found");
+                if (user.IsDisabled)
                 {
                     var isDisable = await _userRepository.DisableUserStatusAsync(userId);
                     if (!isDisable)
@@ -153,7 +155,7 @@ namespace NazarMahal.Application.Services
                 return new FailActionResponse<UserResponseDto>("Request body cannot be null.");
 
             if (updateUserRequest.UserId <= 0)
-return new FailActionResponse<UserResponseDto>("Invalid user ID. User ID must be greater than 0.");
+                return new FailActionResponse<UserResponseDto>("Invalid user ID. User ID must be greater than 0.");
 
             try
             {

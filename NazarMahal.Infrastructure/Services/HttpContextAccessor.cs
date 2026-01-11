@@ -1,51 +1,39 @@
 using Microsoft.AspNetCore.Http;
 using NazarMahal.Core.Abstractions;
 
-namespace NazarMahal.Infrastructure.Services
+namespace NazarMahal.Infrastructure.Services;
+
+public class RequestContextAccessor(IHttpContextAccessor httpContextAccessor) : IRequestContextAccessor
 {
-    /// <summary>
-    /// Infrastructure implementation of IRequestContextAccessor that wraps ASP.NET Core's HttpContext
-    /// </summary>
-    public class RequestContextAccessor : IRequestContextAccessor
+    public string RequestScheme
     {
-        private readonly Microsoft.AspNetCore.Http.IHttpContextAccessor _httpContextAccessor;
-
-        public RequestContextAccessor(Microsoft.AspNetCore.Http.IHttpContextAccessor httpContextAccessor)
+        get
         {
-            _httpContextAccessor = httpContextAccessor;
+            var httpContext = httpContextAccessor.HttpContext;
+            return httpContext?.Request.Scheme ?? "https";
         }
+    }
 
-        public string RequestScheme
+    public string RequestHost
+    {
+        get
         {
-            get
-            {
-                var httpContext = _httpContextAccessor.HttpContext;
-                return httpContext?.Request.Scheme ?? "https";
-            }
+            var httpContext = httpContextAccessor.HttpContext;
+            return httpContext?.Request.Host.ToString() ?? string.Empty;
         }
+    }
 
-        public string RequestHost
-        {
-            get
-            {
-                var httpContext = _httpContextAccessor.HttpContext;
-                return httpContext?.Request.Host.ToString() ?? string.Empty;
-            }
-        }
+    public string BuildUrl(string path)
+    {
+        var scheme = RequestScheme;
+        var host = RequestHost;
+        if (string.IsNullOrEmpty(host))
+            return path;
 
-        public string BuildUrl(string path)
-        {
-            var scheme = RequestScheme;
-            var host = RequestHost;
-            if (string.IsNullOrEmpty(host))
-                return path;
+        if (path.StartsWith("/"))
+            path = path.Substring(1);
 
-            // Remove leading slash from path if present
-            if (path.StartsWith("/"))
-                path = path.Substring(1);
-
-            return $"{scheme}://{host}/{path}";
-        }
+        return $"{scheme}://{host}/{path}";
     }
 }
 

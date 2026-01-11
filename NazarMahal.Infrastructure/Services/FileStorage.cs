@@ -3,16 +3,8 @@ using NazarMahal.Application.Interfaces;
 
 namespace NazarMahal.Infrastructure.Services
 {
-
-    public class FileStorage : IFileStorage
+    public class FileStorage(string basePath = "wwwroot") : IFileStorage
     {
-        private readonly string _basePath;
-
-        public FileStorage(string basePath = "wwwroot")
-        {
-            _basePath = basePath;
-        }
-
         public async Task<string> SaveFileAsync(IFormFile file, string directory)
         {
             if (file == null)
@@ -20,12 +12,12 @@ namespace NazarMahal.Infrastructure.Services
 
             var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
             var relativePath = Path.Combine(directory, fileName).Replace("\\", "/");
-            var fullPath = Path.Combine(_basePath, relativePath);
+            var fullPath = Path.Combine(basePath, relativePath);
 
             var directoryPath = Path.GetDirectoryName(fullPath);
             if (!Directory.Exists(directoryPath))
             {
-                Directory.CreateDirectory(directoryPath!);
+                _ = Directory.CreateDirectory(directoryPath!);
             }
 
             using (var fileStream = new FileStream(fullPath, FileMode.Create))
@@ -38,9 +30,10 @@ namespace NazarMahal.Infrastructure.Services
 
         public Task DeleteFileAsync(string filePath)
         {
-            if (string.IsNullOrEmpty(filePath)) return Task.CompletedTask;
+            if (string.IsNullOrEmpty(filePath))
+                return Task.CompletedTask;
 
-            var fullPath = Path.Combine(_basePath, filePath.Replace("/", Path.DirectorySeparatorChar.ToString()));
+            var fullPath = Path.Combine(basePath, filePath.Replace("/", Path.DirectorySeparatorChar.ToString()));
             if (File.Exists(fullPath))
             {
                 File.Delete(fullPath);

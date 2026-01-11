@@ -1,8 +1,8 @@
-using NazarMahal.Application.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using NazarMahal.Application.DTOs.AppointmentDto;
 using NazarMahal.API.Extensions;
+using NazarMahal.Application.Common;
+using NazarMahal.Application.DTOs.AppointmentDto;
 using NazarMahal.Application.Interfaces;
 using NazarMahal.Application.RequestDto.AppointmentRequestDto;
 using NazarMahal.Core.Enums;
@@ -41,9 +41,7 @@ namespace NazarMahal.API.Controllers
         /// Update appointment (details or status)
         /// </summary>
         [HttpPatch("{id}")]
-        public async Task<ActionResult<ApiResponseDto<AppointmentDto>>> UpdateAppointment(
-            int id,
-            [FromBody] UpdateAppointmentMergedRequestDto request)
+        public async Task<ActionResult<ApiResponseDto<AppointmentDto>>> UpdateAppointment(int id, [FromBody] UpdateAppointmentMergedRequestDto request)
         {
             if (request.AppointmentStatus.HasValue &&
                 !request.AppointmentDate.HasValue &&
@@ -61,16 +59,26 @@ namespace NazarMahal.API.Controllers
                 return response.ToApiResponse();
             }
 
+            // Get existing appointment to preserve FullName and Email if not provided
+            var existingAppointmentResponse = await appointmentService.GetAppointmentById(id);
+            if (!existingAppointmentResponse.IsSuccessful || existingAppointmentResponse.Payload == null)
+            {
+                return NotFound(new { Message = "Appointment not found" });
+            }
+            var existingAppointment = existingAppointmentResponse.Payload;
+
             var updateRequest = new AppointmentUpdateRequestDto
             {
                 AppointmentId = id,
                 UserId = request.UserId ?? 0,
-                AppointmentDate = request.AppointmentDate ?? DateOnly.FromDateTime(DateTime.Today),
-                AppointmentTime = request.AppointmentTime ?? TimeSpan.Zero,
-                ReasonForVisit = request.ReasonForVisit ?? string.Empty,
-                PhoneNumber = request.PhoneNumber,
-                AppointmentType = request.AppointmentType ?? AppointmentEnums.AppointmentType.Consultation,
-                AdditionalNotes = request.AdditionalNotes
+                AppointmentDate = request.AppointmentDate ?? existingAppointment.AppointmentDate,
+                AppointmentTime = request.AppointmentTime ?? existingAppointment.AppointmentTime,
+                FullName = existingAppointment.FullName,
+                Email = existingAppointment.Email,
+                ReasonForVisit = request.ReasonForVisit ?? existingAppointment.ReasonForVisit,
+                PhoneNumber = request.PhoneNumber ?? existingAppointment.PhoneNumber,
+                AppointmentType = request.AppointmentType ?? existingAppointment.AppointmentType,
+                AdditionalNotes = request.AdditionalNotes ?? existingAppointment.AdditionalNotes
             };
             var updateResponse = await appointmentService.UpdateAppointment(updateRequest);
             return updateResponse.ToApiResponse();

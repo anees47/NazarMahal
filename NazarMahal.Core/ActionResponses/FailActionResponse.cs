@@ -7,18 +7,18 @@ namespace NazarMahal.Core.ActionResponses
 
         public FailActionResponse()
         {
-            SetDefault(default);
+            SetDefault(default!);
         }
 
-        public FailActionResponse(string message) : this(default, message)
+        public FailActionResponse(string message) : this(default!, message)
         {
         }
 
-        public FailActionResponse(List<string> messages) : this(default, messages)
+        public FailActionResponse(List<string> messages) : this(default!, messages)
         {
         }
 
-        public FailActionResponse(T payload, string message = null)
+        public FailActionResponse(T payload, string? message = null)
         {
             Message = message;
             SetDefault(payload);

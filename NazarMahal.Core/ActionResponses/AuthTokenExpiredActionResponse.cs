@@ -7,19 +7,19 @@ namespace NazarMahal.Core.ActionResponses
 
         public AuthTokenExpiredActionResponse()
         {
-            SetDefault(default);
+            SetDefault(default!);
         }
 
-        public AuthTokenExpiredActionResponse(string message) : this(default, message)
+        public AuthTokenExpiredActionResponse(string message) : this(default!, message)
         {
 
         }
 
-        public AuthTokenExpiredActionResponse(List<string> messages) : this(default, messages)
+        public AuthTokenExpiredActionResponse(List<string> messages) : this(default!, messages)
         {
         }
 
-        public AuthTokenExpiredActionResponse(T payload, string message = null)
+        public AuthTokenExpiredActionResponse(T payload, string? message = null)
         {
             Message = message;
             SetDefault(payload);

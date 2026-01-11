@@ -7,7 +7,7 @@ namespace NazarMahal.Application.ResponseDto.AuthResponseDto
         public string UserFullName { get; set; } = string.Empty;
         public string UserEmail { get; set; } = string.Empty;
         public string UserType { get; set; } = string.Empty;
-        public IEnumerable<ClaimDto> Claims { get; set; } = new List<ClaimDto>();
+        public IEnumerable<ClaimDto> Claims { get; set; } = [];
         public string Message { get; set; } = string.Empty;
     }
 

@@ -1,7 +1,6 @@
-using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using NazarMahal.Infrastructure.Data;
+using System.Diagnostics;
 
 namespace NazarMahal.API.Controllers;
 
@@ -14,8 +13,8 @@ public class HealthController : ControllerBase
 
     public HealthController(ApplicationDbContext dbContext, ILogger<HealthController> logger)
     {
-        _dbContext = dbContext;
-        _logger = logger;
+        _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <summary>
@@ -63,7 +62,7 @@ public class HealthController : ControllerBase
         {
             var canConnect = await _dbContext.Database.CanConnectAsync();
             stopwatch.Stop();
-            
+
             if (canConnect)
             {
                 return ("connected", null, stopwatch.ElapsedMilliseconds);

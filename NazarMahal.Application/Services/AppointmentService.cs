@@ -89,10 +89,10 @@ namespace NazarMahal.Application.Services
                 var appointment = new Appointment
                 {
                     UserId = scheduleAppointmentRequestDto.UserId ?? 0,
-                    FullName = scheduleAppointmentRequestDto.FullName,
-                    Email = scheduleAppointmentRequestDto.Email,
-                    PhoneNumber = scheduleAppointmentRequestDto.PhoneNumber,
-                    ReasonForVisit = scheduleAppointmentRequestDto.ReasonForVisit,
+                    FullName = scheduleAppointmentRequestDto.FullName ?? string.Empty,
+                    Email = scheduleAppointmentRequestDto.Email ?? string.Empty,
+                    PhoneNumber = scheduleAppointmentRequestDto.PhoneNumber ?? string.Empty,
+                    ReasonForVisit = scheduleAppointmentRequestDto.ReasonForVisit ?? string.Empty,
                     AppointmentType = scheduleAppointmentRequestDto.AppointmentType,
                     AppointmentDate = scheduleAppointmentRequestDto.AppointmentDate,
                     AppointmentTime = scheduleAppointmentRequestDto.AppointmentTime,
@@ -101,7 +101,7 @@ namespace NazarMahal.Application.Services
                     DateCreated = PakistanTimeHelper.Now
                 };
 
-                if(scheduleAppointmentRequestDto.UserId.HasValue)
+                if (scheduleAppointmentRequestDto.UserId.HasValue)
                 {
                     var user = await _userRepository.GetUserByIdAsync(scheduleAppointmentRequestDto.UserId.Value);
                     if (user != null)
@@ -112,8 +112,8 @@ namespace NazarMahal.Application.Services
                     }
                 }
 
-               await _appointmentRepository.AddAppointmentAsync(appointment);
-               
+                _ = await _appointmentRepository.AddAppointmentAsync(appointment);
+
                 // Send "Appointment Scheduled" email (tells customer to wait for confirmation)
                 await _notificationService.SendAppointmentScheduledEmail(appointment);
 
@@ -132,7 +132,8 @@ namespace NazarMahal.Application.Services
             {
 
                 var appointment = await _appointmentRepository.CancelAppointment(appointmentCancelRequestDto.AppointmentId);
-                if (appointment == null) return new NotFoundActionResponse<AppointmentDto>($"No Appointment is found for appointmentId {appointmentCancelRequestDto.AppointmentId}");
+                if (appointment == null)
+                    return new NotFoundActionResponse<AppointmentDto>($"No Appointment is found for appointmentId {appointmentCancelRequestDto.AppointmentId}");
 
                 var appointmentDto = appointment.ToAppointmentDto();
                 return ActionResponse<AppointmentDto>.Ok(appointmentDto, "Appointment Cancelled Successfully");
@@ -167,7 +168,7 @@ namespace NazarMahal.Application.Services
                 var oldStatus = appointment.AppointmentStatus;
                 appointment.AppointmentStatus = appointmentCancelRequestDto.AppointmentStatus;
 
-                await _appointmentRepository.UpdateAppointment(appointment);
+                _ = await _appointmentRepository.UpdateAppointment(appointment);
 
                 // Send appropriate email based on new status
                 if (appointmentCancelRequestDto.AppointmentStatus == AppointmentEnums.AppointmentStatus.Cancelled)
@@ -200,7 +201,7 @@ namespace NazarMahal.Application.Services
                 {
                     return new NotFoundActionResponse<AppointmentDto>("Appointment update request is invalid.");
                 }
-             
+
                 if (appointmentUpdateRequestDto.AppointmentDate < DateOnly.FromDateTime(DateTime.Today))
                 {
                     return new FailActionResponse<AppointmentDto>("Cannot update appointments to past dates.");
@@ -383,7 +384,7 @@ namespace NazarMahal.Application.Services
             }
         }
 
-        public async Task<ActionResponse<AppointmentDto>> CompleteAppointment(int appointmentId, string completionNotes = null)
+        public async Task<ActionResponse<AppointmentDto>> CompleteAppointment(int appointmentId, string? completionNotes = null)
         {
             try
             {

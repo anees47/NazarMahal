@@ -10,7 +10,7 @@ namespace NazarMahal.Application.Interfaces.IRepository
 
         #region Glasses Category
 
-        Task<GlassesCategory> FindGlassesCategoryByName(string categoryName);
+        Task<GlassesCategory?> FindGlassesCategoryByName(string categoryName);
         Task<GlassesCategory> AddGlassesCategory(GlassesCategory category);
         Task<GlassesCategory> GetGlassesCategoryById(int categoryId);
 
@@ -22,11 +22,8 @@ namespace NazarMahal.Application.Interfaces.IRepository
         Task<GlassesSubCategory> FindGlassesSubCategoryByName(string subCategoryName, int categoryId);
         Task<GlassesSubCategory> AddGlassesSubCategory(GlassesSubCategory glassesSubCategory);
         Task<GlassesSubCategory> GetGlassesSubCategoryById(int subCategoryId);
-
         Task<IEnumerable<GlassesSubCategory>> GetGlassesSubcategoryByCategoryId(int categoryId);
-
-        Task<GlassesSubCategory> DeleteGlassesSubcategoryById (int subCategoryId);
-
+        Task<GlassesSubCategory> DeleteGlassesSubcategoryById(int subCategoryId);
 
         #endregion
 
