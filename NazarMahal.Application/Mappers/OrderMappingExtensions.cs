@@ -91,15 +91,13 @@ namespace NazarMahal.Application.Mappers
                         FileName = a.FileName,
                         FileType = a.FileType,
                         StoragePath = a.StoragePath,
-                        ReferenceId = a.GlassesId
+                        ReferenceId = a.GlassesId,
+                        ImageUrl = $"/api/glasses/attachments/{a.Id}"
                     }).ToList()
                 } : null
             };
         }
 
-        /// <summary>
-        /// Map IEnumerable of Order to IEnumerable of OrderResponseDto
-        /// </summary>
         public static IEnumerable<OrderResponseDto> ToOrderResponseDtoList(this IEnumerable<Order> orders)
         {
             if (orders == null)
@@ -107,9 +105,7 @@ namespace NazarMahal.Application.Mappers
             return orders.Select(o => o.ToOrderResponseDto());
         }
 
-        /// <summary>
-        /// Map IEnumerable of OrderItem to List of OrderItemDto
-        /// </summary>
+
         public static List<OrderItemDto> ToOrderItemDtoList(this IEnumerable<OrderItem> items)
         {
             if (items == null)
@@ -117,9 +113,7 @@ namespace NazarMahal.Application.Mappers
             return items.Select(i => i.ToOrderItemDto()).Where(i => i != null).ToList()!;
         }
 
-        /// <summary>
-        /// Map OrderItemRequestDto to OrderItem
-        /// </summary>
+
         public static OrderItem ToOrderItem(this OrderItemRequestDto request)
         {
             if (request == null)
@@ -133,9 +127,6 @@ namespace NazarMahal.Application.Mappers
             };
         }
 
-        /// <summary>
-        /// Map IEnumerable of OrderItemRequestDto to List of OrderItem
-        /// </summary>
         public static List<OrderItem> ToOrderItemList(this IEnumerable<OrderItemRequestDto> requests)
         {
             if (requests == null)

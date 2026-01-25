@@ -5,7 +5,8 @@ namespace NazarMahal.Application.DTOs.GlassesDto
         public int Id { get; set; }
         public required string FileName { get; set; }
         public required string FileType { get; set; }
-        public required string StoragePath { get; set; }
+        public string? StoragePath { get; set; }
         public int ReferenceId { get; set; }
+        public string ImageUrl { get; set; } = string.Empty;
     }
 }

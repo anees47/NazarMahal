@@ -32,9 +32,19 @@ namespace NazarMahal.Infrastructure.EntityConfiguration
             _ = builder.Property(x => x.StoragePath)
                 .HasColumnName("StoragePath")
                 .HasColumnType("NVARCHAR(500)")
+                .IsRequired(false);
+
+            _ = builder.Property(x => x.FileData)
+                .HasColumnName("FileData")
+                .HasColumnType("VARBINARY(MAX)")
                 .IsRequired();
 
-            _ = builder.HasOne<Glasses>().WithMany().HasForeignKey(x => x.GlassesId).HasConstraintName("FK_Glasses_Id").IsRequired();
+            _ = builder.HasOne<Glasses>()
+                .WithMany(g => g.Attachments)
+                .HasForeignKey(x => x.GlassesId)
+                .HasConstraintName("FK_Glasses_Id")
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Cascade);
 
         }
     }

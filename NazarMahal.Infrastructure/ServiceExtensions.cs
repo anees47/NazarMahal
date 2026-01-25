@@ -80,6 +80,39 @@ public static class ServiceExtensions
             return dbContext.Database.GetDbConnection();
         });
 
+        // Validate JWT configuration before setting up authentication
+        var jwtKey = configuration["Jwt:Key"];
+        var jwtIssuer = configuration["Jwt:Issuer"];
+        var jwtAudience = configuration["Jwt:Audience"];
+
+        if (string.IsNullOrWhiteSpace(jwtKey))
+        {
+            throw new InvalidOperationException(
+                "JWT Key is not configured. Please set 'Jwt:Key' in appsettings.json or environment variables. " +
+                "The key must be at least 32 characters long for HS256 algorithm.");
+        }
+
+        if (string.IsNullOrWhiteSpace(jwtIssuer))
+        {
+            throw new InvalidOperationException(
+                "JWT Issuer is not configured. Please set 'Jwt:Issuer' in appsettings.json or environment variables.");
+        }
+
+        if (string.IsNullOrWhiteSpace(jwtAudience))
+        {
+            throw new InvalidOperationException(
+                "JWT Audience is not configured. Please set 'Jwt:Audience' in appsettings.json or environment variables.");
+        }
+
+        // Validate key length (minimum 32 bytes for HS256)
+        var keyBytes = Encoding.UTF8.GetBytes(jwtKey);
+        if (keyBytes.Length < 32)
+        {
+            throw new InvalidOperationException(
+                $"JWT Key must be at least 32 characters (bytes) long. Current length: {keyBytes.Length}. " +
+                "Please generate a secure key using: Convert.ToBase64String(new byte[32]) or use a longer key.");
+        }
+
         _ = services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -95,11 +128,9 @@ public static class ServiceExtensions
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
 
-                ValidIssuer = configuration["Jwt:Issuer"],
-                ValidAudience = configuration["Jwt:Audience"],
-                IssuerSigningKey = new SymmetricSecurityKey(
-                    Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!)
-                ),
+                ValidIssuer = jwtIssuer,
+                ValidAudience = jwtAudience,
+                IssuerSigningKey = new SymmetricSecurityKey(keyBytes),
                 ClockSkew = TimeSpan.Zero
             };
         });

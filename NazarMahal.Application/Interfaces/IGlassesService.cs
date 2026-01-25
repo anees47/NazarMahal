@@ -1,6 +1,7 @@
 using NazarMahal.Application.DTOs.GlassesDto;
 using NazarMahal.Application.RequestDto.GlassesRequestDto;
 using NazarMahal.Core.ActionResponses;
+using NazarMahal.Core.Entities;
 
 namespace NazarMahal.Application.Interfaces
 {
@@ -14,7 +15,6 @@ namespace NazarMahal.Application.Interfaces
 
         #region Glasses SubCategory
         Task<ActionResponse<IEnumerable<GlassesSubcategoriesListDto>>> GetAllGlassesSubCategoriesByCategoryId(int categoryId);
-
         Task<ActionResponse<IEnumerable<GlassesSubcategoriesListDto>>> GetGlassesSubCategories(bool showActiveOnly, int categoryId);
         Task<ActionResponse<GlassesSubcategoriesListDto>> GetGlassesSubCategoryById(int glassesSubCategoryId);
         Task<ActionResponse<GlassesSubCategoryDto>> CreateNewGlassesSubCategory(CreateNewGlassesSubCategoryRequestDto newGlassesSubCategoryRequest);
@@ -28,6 +28,7 @@ namespace NazarMahal.Application.Interfaces
         Task<ActionResponse<GlassesDto>> CreateNewGlasses(CreateNewGlassesRequestDto newGlassesRequest);
         Task<ActionResponse<GlassesDto>> UpdateGlasses(UpdateGlassesRequestDto updateGlassesRequest);
         Task<ActionResponse<GlassesDto>> SoftDeleteGlasses(int GlassesId);
+        Task<ActionResponse<GlassesAttachment>> GetAttachmentById(int attachmentId);
         #endregion
 
 

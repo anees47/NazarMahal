@@ -3,6 +3,7 @@ using NazarMahal.Application.DTOs.GlassesDto;
 using NazarMahal.Application.Interfaces.IReadModelRepository;
 using NazarMahal.Core.ReadModels;
 using System.Data;
+using System.Linq;
 using System.Text;
 
 namespace NazarMahal.Infrastructure.ReadModelRepository
@@ -55,15 +56,37 @@ namespace NazarMahal.Infrastructure.ReadModelRepository
                     ga.StoragePath
                 FROM dbo.Glasses g
                 INNER JOIN dbo.GlassesCategory gc ON g.CategoryId = gc.Id
-                INNER JOIN dbo.GlassesSubcategory gsc ON g.SubCategoryId = gsc.Id
+                LEFT JOIN dbo.GlassesSubcategory gsc ON g.SubCategoryId = gsc.Id AND gsc.IsActive = 1
                 LEFT JOIN dbo.GlassesAttachment ga ON g.Id = ga.GlassesId
                 WHERE g.Id = @GlassesId";
 
-            var result = await _dbConnection.QueryAsync<GlassesReadModel>(
-                sqlQuery,
-                new { GlassesId = glassesId });
+            var glassesDictionary = new Dictionary<int, GlassesReadModel>();
 
-            return result.FirstOrDefault();
+            var result = await _dbConnection.QueryAsync<GlassesReadModel, GlassesAttachmentReadModel, GlassesReadModel>(
+                sqlQuery,
+                (glasses, attachment) =>
+                {
+                    if (!glassesDictionary.TryGetValue(glasses.GlassesId, out var existing))
+                    {
+                        existing = glasses;
+                        existing.AttachmentReadModels = [];
+                        glassesDictionary.Add(existing.GlassesId, existing);
+                    }
+
+                    if (attachment != null && attachment.AttachmentId > 0 && !string.IsNullOrWhiteSpace(attachment.FileName))
+                    {
+                        if (!existing.AttachmentReadModels.Any(a => a.AttachmentId == attachment.AttachmentId))
+                        {
+                            existing.AttachmentReadModels.Add(attachment);
+                        }
+                    }
+
+                    return existing;
+                },
+                new { GlassesId = glassesId },
+                splitOn: "AttachmentId");
+
+            return glassesDictionary.Values.FirstOrDefault();
         }
 
         public async Task<IReadOnlyList<GlassesCategoryReadModel>> GetGlassesCategories(bool showActiveOnly, bool showHavingSubcategories)
@@ -261,9 +284,12 @@ namespace NazarMahal.Infrastructure.ReadModelRepository
                         glassesDictionary.Add(existing.GlassesId, existing);
                     }
 
-                    if (attachment != null && attachment.AttachmentId != 0)
+                    if (attachment != null && attachment.AttachmentId > 0 && !string.IsNullOrWhiteSpace(attachment.FileName))
                     {
-                        existing.AttachmentReadModels.Add(attachment);
+                        if (!existing.AttachmentReadModels.Any(a => a.AttachmentId == attachment.AttachmentId))
+                        {
+                            existing.AttachmentReadModels.Add(attachment);
+                        }
                     }
 
                     return existing;

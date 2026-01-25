@@ -18,9 +18,7 @@ namespace NazarMahal.API.Controllers
 
         #region Categories
 
-        /// <summary>
-        /// Get all glasses categories
-        /// </summary>
+
         [AllowAnonymous]
         [HttpGet("categories")]
         public async Task<ActionResult<ApiResponseDto<IEnumerable<GlassesCategoryDto>>>> GetCategories()
@@ -29,9 +27,7 @@ namespace NazarMahal.API.Controllers
             return response.ToApiResponse();
         }
 
-        /// <summary>
-        /// Create a new glasses category
-        /// </summary>
+
         [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.SuperAdmin}")]
         [HttpPost("categories")]
         public async Task<ActionResult<ApiResponseDto<GlassesCategoryDto>>> CreateCategory([FromBody] CreateNewGlassesCategoryRequestDto request)
@@ -40,9 +36,7 @@ namespace NazarMahal.API.Controllers
             return response.ToApiResponse();
         }
 
-        /// <summary>
-        /// Update a glasses category
-        /// </summary>
+
         [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.SuperAdmin}")]
         [HttpPut("categories/{id}")]
         public async Task<ActionResult<ApiResponseDto<GlassesCategoryDto>>> UpdateCategory(
@@ -58,12 +52,6 @@ namespace NazarMahal.API.Controllers
 
         #region Subcategories
 
-        /// <summary>
-        /// Get glasses subcategories
-        /// Query params:
-        /// - categoryId: filter by category (required)
-        /// - activeOnly: filter active subcategories only (default: false)
-        /// </summary>
         [AllowAnonymous]
         [HttpGet("subcategories")]
         public async Task<ActionResult<ApiResponseDto<IEnumerable<GlassesSubcategoriesListDto>>>> GetSubcategories(
@@ -84,9 +72,6 @@ namespace NazarMahal.API.Controllers
             return response.ToApiResponse();
         }
 
-        /// <summary>
-        /// Get a specific subcategory by ID
-        /// </summary>
         [AllowAnonymous]
         [HttpGet("subcategories/{id}")]
         public async Task<ActionResult<ApiResponseDto<GlassesSubcategoriesListDto>>> GetSubcategory(int id)
@@ -95,9 +80,6 @@ namespace NazarMahal.API.Controllers
             return response.ToApiResponse();
         }
 
-        /// <summary>
-        /// Create a new glasses subcategory
-        /// </summary>
         [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.SuperAdmin}")]
         [HttpPost("subcategories")]
         public async Task<ActionResult<ApiResponseDto<GlassesSubCategoryDto>>> CreateSubcategory([FromBody] CreateNewGlassesSubCategoryRequestDto request)
@@ -106,9 +88,6 @@ namespace NazarMahal.API.Controllers
             return response.ToApiResponse();
         }
 
-        /// <summary>
-        /// Update a glasses subcategory
-        /// </summary>
         [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.SuperAdmin}")]
         [HttpPut("subcategories/{id}")]
         public async Task<ActionResult<ApiResponseDto<GlassesSubCategoryDto>>> UpdateSubcategory(
@@ -120,9 +99,7 @@ namespace NazarMahal.API.Controllers
             return response.ToApiResponse();
         }
 
-        /// <summary>
-        /// Delete (soft delete) a glasses subcategory
-        /// </summary>
+
         [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.SuperAdmin}")]
         [HttpDelete("subcategories/{id}")]
         public async Task<ActionResult<ApiResponseDto<GlassesSubCategoryDto>>> DeleteSubcategory(int id)
@@ -175,9 +152,7 @@ namespace NazarMahal.API.Controllers
             return response.ToApiResponse();
         }
 
-        /// <summary>
-        /// Get a specific glasses product by ID
-        /// </summary>
+
         [AllowAnonymous]
         [HttpGet("{id}")]
         public async Task<ActionResult<ApiResponseDto<GlassesListDto>>> GetGlasses(int id)
@@ -186,9 +161,7 @@ namespace NazarMahal.API.Controllers
             return response.ToApiResponse();
         }
 
-        /// <summary>
-        /// Create a new glasses product (multipart/form-data)
-        /// </summary>
+
         [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.SuperAdmin}")]
         [HttpPost]
         [Consumes("multipart/form-data")]
@@ -198,9 +171,7 @@ namespace NazarMahal.API.Controllers
             return response.ToApiResponse();
         }
 
-        /// <summary>
-        /// Update a glasses product (multipart/form-data)
-        /// </summary>
+
         [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.SuperAdmin}")]
         [HttpPut("{id}")]
         [Consumes("multipart/form-data")]
@@ -211,15 +182,28 @@ namespace NazarMahal.API.Controllers
             return response.ToApiResponse();
         }
 
-        /// <summary>
-        /// Delete (soft delete) a glasses product
-        /// </summary>
+
         [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.SuperAdmin}")]
         [HttpDelete("{id}")]
         public async Task<ActionResult<ApiResponseDto<GlassesDto>>> DeleteGlasses(int id)
         {
             var response = await _glassesService.SoftDeleteGlasses(id);
             return response.ToApiResponse();
+        }
+
+        [AllowAnonymous]
+        [HttpGet("attachments/{attachmentId}")]
+        public async Task<IActionResult> GetAttachmentImage(int attachmentId)
+        {
+            var response = await _glassesService.GetAttachmentById(attachmentId);
+            
+            if (!response.IsSuccessful || response.Payload == null)
+            {
+                return NotFound();
+            }
+
+            var attachment = response.Payload;
+            return File(attachment.FileData, attachment.FileType, attachment.FileName);
         }
 
         #endregion

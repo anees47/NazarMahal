@@ -108,18 +108,29 @@ namespace NazarMahal.Application.Mappers
             };
         }
 
-        public static GlassesAttachmentDto? ToGlassesAttachmentDto(this GlassesAttachmentReadModel attachment)
+        public static GlassesAttachmentDto? ToGlassesAttachmentDto(this GlassesAttachmentReadModel? attachment, string? baseUrl = null)
         {
             if (attachment == null)
                 return null;
+
+            if (attachment.AttachmentId <= 0)
+                return null;
+
+            if (string.IsNullOrWhiteSpace(attachment.FileName))
+                return null;
+
+            var imageUrl = !string.IsNullOrEmpty(baseUrl) 
+                ? $"{baseUrl}/api/glasses/attachments/{attachment.AttachmentId}"
+                : $"/api/glasses/attachments/{attachment.AttachmentId}";
 
             return new GlassesAttachmentDto
             {
                 Id = attachment.AttachmentId,
                 FileName = attachment.FileName,
-                FileType = attachment.FileType,
+                FileType = attachment.FileType ?? string.Empty,
                 StoragePath = attachment.StoragePath,
-                ReferenceId = attachment.GlassesId
+                ReferenceId = attachment.GlassesId,
+                ImageUrl = imageUrl
             };
         }
 
@@ -146,7 +157,10 @@ namespace NazarMahal.Application.Mappers
                 SubCategoryName = glasses.SubCategoryName,
                 IsActive = glasses.IsActive,
                 AvailableQuantity = glasses.AvailableQuantity,
-                Attachments = glasses.AttachmentReadModels.Select(a => a.ToGlassesAttachmentDto()).ToList() ?? []
+                Attachments = glasses.AttachmentReadModels
+                    .Select(a => a.ToGlassesAttachmentDto())
+                    .Where(a => a != null)
+                    .ToList() ?? []
             };
         }
 

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NazarMahal.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using NazarMahal.Infrastructure.Data;
 namespace NazarMahal.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260125052825_AddFileDataToGlassesAttachment")]
+    partial class AddFileDataToGlassesAttachment
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -273,6 +276,9 @@ namespace NazarMahal.Infrastructure.Data.Migrations
                         .HasColumnType("INT")
                         .HasColumnName("GlassesId");
 
+                    b.Property<int?>("GlassesId1")
+                        .HasColumnType("int");
+
                     b.Property<string>("StoragePath")
                         .HasMaxLength(1000)
                         .HasColumnType("NVARCHAR(500)")
@@ -284,6 +290,8 @@ namespace NazarMahal.Infrastructure.Data.Migrations
                     SqlServerKeyBuilderExtensions.IsClustered(b.HasKey("Id"));
 
                     b.HasIndex("GlassesId");
+
+                    b.HasIndex("GlassesId1");
 
                     b.ToTable("GlassesAttachment", "dbo");
                 });
@@ -623,11 +631,15 @@ namespace NazarMahal.Infrastructure.Data.Migrations
             modelBuilder.Entity("NazarMahal.Core.Entities.GlassesAttachment", b =>
                 {
                     b.HasOne("NazarMahal.Core.Entities.Glasses", null)
-                        .WithMany("Attachments")
+                        .WithMany()
                         .HasForeignKey("GlassesId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("FK_Glasses_Id");
+
+                    b.HasOne("NazarMahal.Core.Entities.Glasses", null)
+                        .WithMany("Attachments")
+                        .HasForeignKey("GlassesId1");
                 });
 
             modelBuilder.Entity("NazarMahal.Core.Entities.GlassesSubCategory", b =>

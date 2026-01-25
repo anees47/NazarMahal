@@ -114,7 +114,7 @@ namespace NazarMahal.Infrastructure.Repository
 
         public async Task<GlassesAttachment> GetGlassesAttachmentById(int glassesId, int attachementId)
         {
-            return await _dbContext.GlassesAttachments.Where(f => f.GlassesId == glassesId && f.Id == attachementId).FirstOrDefaultAsync();
+                return await _dbContext.GlassesAttachments.Where(f => f.GlassesId == glassesId && f.Id == attachementId).FirstOrDefaultAsync();
         }
 
         public async Task<IReadOnlyList<GlassesAttachment>> GetGlassesAttachmentsByIds(int glassesId, IEnumerable<int> attachmentIds)

@@ -282,12 +282,7 @@ namespace NazarMahal.Application.Services
                     return new NotFoundActionResponse<GlassesListDto>("Glasses not found");
 
                 var outputGlasses = glasses.ToGlassesListDto();
-
-                var glassesAttachment = await _glassesReadModelRepository.GetGlassesAttachments(glassesId);
-                if (glassesAttachment.Any())
-                {
-                    outputGlasses.Attachments = glassesAttachment.Select(a => a.ToGlassesAttachmentDto());
-                }
+              
 
                 return new OkActionResponse<GlassesListDto>(outputGlasses);
             }
@@ -344,9 +339,26 @@ namespace NazarMahal.Application.Services
             var newImageList = new List<GlassesAttachment>();
             try
             {
+                if (files == null || !files.Any())
+                {
+                    return ActionResponse<IReadOnlyList<GlassesAttachment>>.Fail("No files provided.");
+                }
+
                 foreach (var file in files)
                 {
-                    var fileContentTypeResult = FileContentType.Create(file.ContentType);
+                    if (file == null || file.Length == 0)
+                    {
+                        return ActionResponse<IReadOnlyList<GlassesAttachment>>.Fail($"File {file?.FileName ?? "unknown"} is empty or invalid.");
+                    }
+
+                    // Use ContentType from file, or infer from file extension if missing
+                    string contentType = file.ContentType;
+                    if (string.IsNullOrWhiteSpace(contentType))
+                    {
+                        contentType = _fileStorage.GetContentType(file.FileName);
+                    }
+
+                    var fileContentTypeResult = FileContentType.Create(contentType);
                     if (!fileContentTypeResult.IsSuccessful)
                         return ActionResponse<IReadOnlyList<GlassesAttachment>>.Fail(fileContentTypeResult.Messages);
 
@@ -355,15 +367,20 @@ namespace NazarMahal.Application.Services
                     // Validate image
                     if (!fileContentTypeResult.Payload.IsImage())
                     {
-                        return ActionResponse<IReadOnlyList<GlassesAttachment>>.Fail("Only image attachments are allowed.");
+                        return ActionResponse<IReadOnlyList<GlassesAttachment>>.Fail($"File {file.FileName} is not a valid image. Only image attachments are allowed.");
                     }
 
-                    // Save file using IFileStorage
-                    var savedRelativePath = await _fileStorage.SaveFileAsync(file, Path.Combine("uploads", "glasses"));
+                    // Read file data into byte array
+                    byte[] fileData;
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        await file.CopyToAsync(memoryStream);
+                        fileData = memoryStream.ToArray();
+                    }
 
-                    var fileName = Path.GetFileName(savedRelativePath);
+                    var fileName = file.FileName;
 
-                    var newImage = GlassesAttachment.Create(glassesId, fileName, savedRelativePath, fileContentType);
+                    var newImage = GlassesAttachment.Create(glassesId, fileName, fileData, fileContentType);
                     _ = await _glassesRepository.AddGlassesAttachment(newImage);
 
                     newImageList.Add(newImage);
@@ -411,7 +428,12 @@ namespace NazarMahal.Application.Services
                 {
                     var attachmentsResponse = await AddGlassesAttachments(existingGlasses.Id, updateGlassesRequest.Attachments);
                     if (!attachmentsResponse.IsSuccessful)
-                        return new FailActionResponse<GlassesDto>("Failed to save new images. Please try again.");
+                    {
+                        var errorMessages = attachmentsResponse.Messages != null && attachmentsResponse.Messages.Any() 
+                            ? attachmentsResponse.Messages 
+                            : new List<string> { "Failed to save new images. Please try again." };
+                        return new FailActionResponse<GlassesDto>(errorMessages);
+                    }
                 }
 
                 if (updateGlassesRequest.DeletedAttachmentIds != null && updateGlassesRequest.DeletedAttachmentIds.Any())
@@ -425,7 +447,25 @@ namespace NazarMahal.Application.Services
             }
             catch (Exception ex)
             {
-                return new FailActionResponse<GlassesDto>($"Error occurred in GlassesService.UpdateGlasses: {ex.Message}");
+                return new FailActionResponse<GlassesDto>($"Error occurred in GlassesService.UpdateGlasses: {ex.Message}\nStack Trace: {ex.StackTrace}");
+            }
+        }
+
+        public async Task<ActionResponse<GlassesAttachment>> GetAttachmentById(int attachmentId)
+        {
+            try
+            {
+                var attachment = await _glassesRepository.GetGlassesAttachmentById(0, attachmentId);
+                if (attachment == null)
+                {
+                    return new NotFoundActionResponse<GlassesAttachment>("Attachment not found");
+                }
+
+                return new OkActionResponse<GlassesAttachment>(attachment);
+            }
+            catch (Exception ex)
+            {
+                return new FailActionResponse<GlassesAttachment>($"Error occurred in GlassesService.GetAttachmentById: {ex.Message}");
             }
         }
 
