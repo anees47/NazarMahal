@@ -158,8 +158,17 @@ namespace NazarMahal.Application.Mappers
                 IsActive = glasses.IsActive,
                 AvailableQuantity = glasses.AvailableQuantity,
                 Attachments = glasses.AttachmentReadModels
-                    .Select(a => a.ToGlassesAttachmentDto())
+                    .Select(a => 
+                    {
+                        var dto = a.ToGlassesAttachmentDto();
+                        if (dto != null && dto.ReferenceId == 0)
+                        {
+                            dto.ReferenceId = glasses.GlassesId;
+                        }
+                        return dto;
+                    })
                     .Where(a => a != null)
+                    .Cast<GlassesAttachmentDto>()
                     .ToList() ?? []
             };
         }

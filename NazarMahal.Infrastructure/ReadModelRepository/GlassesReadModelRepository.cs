@@ -51,6 +51,7 @@ namespace NazarMahal.Infrastructure.ReadModelRepository
                     g.IsActive,
                     g.AvailableQuantity,
                     ga.Id AS AttachmentId,
+                    ga.GlassesId,
                     ga.FileName,
                     ga.FileType,
                     ga.StoragePath
@@ -212,7 +213,8 @@ namespace NazarMahal.Infrastructure.ReadModelRepository
             gsc.Name AS SubCategoryName, 
             g.IsActive, 
             g.AvailableQuantity,
-            ga.Id AS AttachmentId, 
+            ga.Id AS AttachmentId,
+            ga.GlassesId,
             ga.FileName, 
             ga.FileType, 
             ga.StoragePath
